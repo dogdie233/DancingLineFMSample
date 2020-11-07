@@ -1,3 +1,4 @@
+using Level.Event;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -62,20 +63,22 @@ namespace Level
         private void UpdateTurnListener(bool value)
 		{
             if (value)
-                GameController.instance.bgButton.onClick.AddListener(() => { Turn(false); });
-            else
-                GameController.instance.bgButton.onClick.RemoveListener(() => { Turn(false); });
+                if (GameController.IsStarted) EventManager.onBGButtonClick.AddListener(() => { Turn(false); });
+			else
+                if (GameController.IsStarted) EventManager.onBGButtonClick.RemoveListener(() => { Turn(false); });
         }
 
         void Awake()
 		{
             rigidbody = GetComponent<Rigidbody>();
-            GameController.events.onStart.AddListener(() => { if (_controlled) moving = true;});
+            EventManager.onStart.AddListener(() => {
+                moving = _controlled;
+                if (_controlled) EventManager.onBGButtonClick.AddListener(() => { Turn(false); });
+            });
         }
 
 		void Start()
         {
-            UpdateTurnListener(_controlled);
             bodiesParent = new GameObject("Bodies").transform;
             previousFrameIsGrounded = IsGrounded;
         }
@@ -129,7 +132,7 @@ namespace Level
         /// <param name="focus">强制转弯(即无视controlled, IsGrounded, State)</param>
         public void Turn(bool focus)
 		{
-            if ((_controlled && IsGrounded && GameController.State == GameState.Playing) || focus)
+            if ((IsGrounded && GameController.State == GameState.Playing) || focus)
             {
                 (transform.localEulerAngles, nextWay) = (nextWay, transform.localEulerAngles);
                 CreateBody();
@@ -149,6 +152,7 @@ namespace Level
                     rigidbody.isKinematic = true;
                     break;
 			}
+            IsControlled = false;
             events.onDie.Invoke(deathCause);
 		}
 

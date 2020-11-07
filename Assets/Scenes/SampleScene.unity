@@ -977,7 +977,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   line: {fileID: 711418601}
   distance: 30
-  smoothTime: 0.3
+  smoothTime: 0.5
+  enable: 1
 --- !u!1 &1231657479
 GameObject:
   m_ObjectHideFlags: 0
