@@ -41,7 +41,7 @@ namespace Event
 			}
 			foreach (HandlerAttributes<T> handler in handlers)
 			{
-				if ((int)handler.priority < (int)priority)
+				if ((int)handler.priority > (int)priority)
 				{
 					handlers.AddBefore(handlers.Find(handler), new HandlerAttributes<T>(action, priority));
 					break;
