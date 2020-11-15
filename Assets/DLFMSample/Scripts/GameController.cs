@@ -1,4 +1,4 @@
-using Level.Event;
+using Event;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -35,7 +35,7 @@ namespace Level
         public static GameState State
 		{
 			get { return _state; }
-			set { EventManager.RunStateChangeEvent(_state, value, StateChangeEventCompleted); }
+			set { if (_state != value) { EventManager.onStateChange.Invoke(_state, value); } }
 		}
 
 		public static bool IsStarted
@@ -43,28 +43,20 @@ namespace Level
             get { return !(_state == GameState.SelectingSkins || _state == GameState.WaitingStart); }
         }
 
-		private static void StateChangeEventCompleted(StateChangeEvent arg)
+		private static StateChangeEventArgs OnStateChange(StateChangeEventArgs arg)
 		{
-            if (arg.canceled)
-                return;
-            _state = arg.newState;
-            switch (_state)
-			{
-                case GameState.Playing:
-                    EventManager.onStart.Invoke();
-                    break;
-			}
+            if (!arg.canceled)
+                _state = arg.newState;
+            return arg;
 		}
 
 		private void Awake()
         {
-            bgButton.onClick.AddListener(() => { EventManager.onBGButtonClick.Invoke(); });
             bgButton.onClick.AddListener(() => {
                 if (_state != GameState.Playing && _state != GameState.WaitingRespawn && (int)_state + 1 < Enum.GetNames(typeof(GameState)).Length)
-				{
-                    EventManager.RunStateChangeEvent(_state, (GameState)((int)_state + 1), StateChangeEventCompleted);
-                }
+                    State = (GameState)((int)_state + 1);
             });
+            EventManager.onStateChange.AddListener(OnStateChange, Priority.Lowest);
             if (instance == null && instance != this)
                 instance = this;
             else
