@@ -1,3 +1,4 @@
+using Event;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,10 +13,8 @@ namespace Level
         [Serializable]
         public class EventsClass
         {
-            [Serializable]
-            public class DieEvent : UnityEvent<DeathCause> { }
-            public UnityEvent onTurn;
-            public DieEvent onDie;
+            public EventBase<LineTurnEventArgs> onTurn = new EventBase<LineTurnEventArgs>();
+            public EventBase<LineDieEventArgs> onDie = new EventBase<LineDieEventArgs>();
             public UnityEvent OnExitGround;
             public UnityEvent OnEnterGround;
         }
@@ -62,21 +61,28 @@ namespace Level
         private void UpdateTurnListener(bool value)
 		{
             if (value)
-                GameController.instance.bgButton.onClick.AddListener(() => { Turn(false); });
-            else
-                GameController.instance.bgButton.onClick.RemoveListener(() => { Turn(false); });
+                if (GameController.IsStarted) { GameController.instance.bgButton.onClick.AddListener(() => { Turn(false); }); }
+			else
+                if (GameController.IsStarted) { GameController.instance.bgButton.onClick.RemoveListener(() => { Turn(false); }); }
         }
 
         void Awake()
 		{
             rigidbody = GetComponent<Rigidbody>();
-            GameController.events.onStart.AddListener(() => { if (_controlled) moving = true;});
+            EventManager.onStateChange.AddListener((StateChangeEventArgs e) => {
+                if (e.newState == GameState.Playing && !e.canceled)
+				{
+                    moving = true;
+                    if (_controlled) { GameController.instance.bgButton.onClick.AddListener(() => { Turn(false); }); }
+                }
+                return e;
+            }, Priority.Lowest);
+            events.onDie.AddListener(OnDie, Priority.Lowest);
+            events.onTurn.AddListener(OnTurn, Priority.Lowest);
         }
 
 		void Start()
         {
-            UpdateTurnListener(_controlled);
-            bodiesParent = new GameObject("Bodies").transform;
             previousFrameIsGrounded = IsGrounded;
         }
 
@@ -112,53 +118,61 @@ namespace Level
 			}
         }
 
-        private void CreateBody()
-		{
-            if (body != null && (transform.localScale.z / 2) < Vector3.Distance(lastTurnPosition, transform.position))
-			{
-                body.localScale += Vector3.forward * transform.localScale.z / 2;
-                body.Translate(Vector3.forward * transform.localScale.z / 4, Space.Self);
-            }
-            body = Instantiate(bodyObject, transform.position, transform.rotation, bodiesParent).transform;
-            lastTurnPosition = transform.position;
-        }
-
         /// <summary>
         /// 使线转弯
         /// </summary>
         /// <param name="focus">强制转弯(即无视controlled, IsGrounded, State)</param>
         public void Turn(bool focus)
 		{
-            if ((_controlled && IsGrounded && GameController.State == GameState.Playing) || focus)
-            {
-                (transform.localEulerAngles, nextWay) = (nextWay, transform.localEulerAngles);
-                CreateBody();
-            }
+            events.onTurn.Invoke(new LineTurnEventArgs(this, transform.localEulerAngles, nextWay, focus));
 		}
 
-        /// <summary>
-        /// 给爷死
-        /// </summary>
-        /// <param name="deathCause">怎么死的</param>
-        public void Die(DeathCause deathCause)
+        public LineDieEventArgs OnDie(LineDieEventArgs e)
 		{
-            switch (deathCause)
+            if (!e.canceled)
 			{
-                case DeathCause.Obstacle:
-                    moving = false;
-                    rigidbody.isKinematic = true;
-                    break;
-			}
-            events.onDie.Invoke(deathCause);
+                switch (e.cause)
+                {
+                    case DeathCause.Obstacle:
+                        moving = false;
+                        rigidbody.isKinematic = true;
+                        break;
+                }
+            }
+            return e;
+		}
+
+        public LineTurnEventArgs OnTurn(LineTurnEventArgs e)
+		{
+            if (!e.canceled)
+			{
+                if ((IsGrounded && GameController.State == GameState.Playing) || e.foucs)
+                {
+                    (transform.localEulerAngles, nextWay) = (nextWay, transform.localEulerAngles);
+                    CreateBody();
+                }
+            }
+            return e;
 		}
 
         void OnCollisionEnter(Collision collision)
 		{
             touchings.Add(collision.gameObject);
-            if (collision.gameObject.CompareTag("Obstacle"))
-                Die(DeathCause.Obstacle);
-		}
+            if (collision.gameObject.CompareTag("Obstacle")) { events.onDie.Invoke(new LineDieEventArgs(this, DeathCause.Obstacle)); }
+        }
 
         private void OnCollisionExit(Collision collision) { touchings.Remove(collision.gameObject); }
+
+        private void CreateBody()
+        {
+            if (bodiesParent == null) { bodiesParent = new GameObject("Bodies").transform; }
+            if (body != null && (transform.localScale.z / 2) < Vector3.Distance(lastTurnPosition, transform.position))
+            {
+                body.localScale += Vector3.forward * transform.localScale.z / 2;
+                body.Translate(Vector3.forward * transform.localScale.z / 4, Space.Self);
+            }
+            body = Instantiate(bodyObject, transform.position, transform.rotation, bodiesParent).transform;
+            lastTurnPosition = transform.position;
+        }
     }
 }

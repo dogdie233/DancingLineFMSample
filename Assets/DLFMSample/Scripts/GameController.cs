@@ -28,23 +28,14 @@ namespace Level
 
     public class GameController : MonoBehaviour
     {
-        [Serializable]
-        public class EventsClass
-        {
-            public delegate void StateChange(ref StateChangeEvent arg);
-            public UnityEvent onStart = new UnityEvent();
-            public StateChange OnStateChange;
-        }
-
         [HideInInspector] public static GameController instance = null;
         public Button bgButton;
-        public static EventsClass events = new EventsClass();
         private static GameState _state = GameState.SelectingSkins;
         
         public static GameState State
 		{
 			get { return _state; }
-			set { RunStateChangeEvent(value); }
+			set { if (_state != value) { EventManager.onStateChange.Invoke(_state, value); } }
 		}
 
 		public static bool IsStarted
@@ -52,36 +43,20 @@ namespace Level
             get { return !(_state == GameState.SelectingSkins || _state == GameState.WaitingStart); }
         }
 
-        private static void RunStateChangeEvent()
+		private static StateChangeEventArgs OnStateChange(StateChangeEventArgs arg)
 		{
-            RunStateChangeEvent((GameState)((int)_state + 1));
-		}
-
-        private static void RunStateChangeEvent(GameState newState)
-		{
-            StateChangeEvent arg = new StateChangeEvent(_state, newState);
-            try { events.OnStateChange.BeginInvoke(ref arg, ar => { events.OnStateChange.EndInvoke(ref arg, ar); StateChangeEventCompleted(arg); }, null); }
-            catch (NullReferenceException) { StateChangeEventCompleted(arg); }
-        }
-
-		private static void StateChangeEventCompleted(StateChangeEvent arg)
-		{
-            Debug.Log("test: " + arg.test);
-            if (arg.canceled)
-                return;
-            _state = arg.newState;
-            switch (_state)
-			{
-                case GameState.Playing:
-                    events.onStart.Invoke();
-                    instance.bgButton.onClick.RemoveListener(RunStateChangeEvent);
-                    break;
-			}
+            if (!arg.canceled)
+                _state = arg.newState;
+            return arg;
 		}
 
 		private void Awake()
-		{
-            bgButton.onClick.AddListener(RunStateChangeEvent);
+        {
+            bgButton.onClick.AddListener(() => {
+                if (_state != GameState.Playing && _state != GameState.WaitingRespawn && (int)_state + 1 < Enum.GetNames(typeof(GameState)).Length)
+                    State = (GameState)((int)_state + 1);
+            });
+            EventManager.onStateChange.AddListener(OnStateChange, Priority.Lowest);
             if (instance == null && instance != this)
                 instance = this;
             else
