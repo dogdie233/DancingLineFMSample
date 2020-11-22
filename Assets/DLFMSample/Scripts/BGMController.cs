@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+using DG.Tweening;
+
 namespace Level
 {
     public class BGMController : MonoBehaviour
@@ -20,7 +22,7 @@ namespace Level
 			if (!e.canceled)
 			{
 				if (e.newState == GameState.Playing) { source.Play(); }
-				if (e.newState == GameState.WaitingRespawn) { source.Pause(); }
+				if (e.newState == GameState.WaitingRespawn) { source.DOFade(0f, 5f); }
 			}
 			return e;
 		}

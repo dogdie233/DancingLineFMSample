@@ -1,0 +1,189 @@
+fileFormatVersion: 2
+guid: b9341a8732622af40b7bfbaf3c889026
+ModelImporter:
+  serializedVersion: 23
+  fileIDToRecycleName:
+    100000: Diamond.002
+    100002: Diamond.002_cell
+    100004: Diamond.002_cell.001
+    100006: Diamond.002_cell.002
+    100008: Diamond.002_cell.003
+    100010: Diamond.002_cell.004
+    100012: Diamond.002_cell.005
+    100014: Diamond.002_cell.006
+    100016: Diamond.002_cell.007
+    100018: Diamond.002_cell.008
+    100020: Diamond.002_cell.009
+    100022: Diamond.002_cell.010
+    100024: Diamond.002_cell.011
+    100026: Diamond.002_cell.012
+    100028: Diamond.002_cell.013
+    100030: Diamond.002_cell.014
+    100032: Diamond.002_cell.015
+    100034: Diamond.002_cell.016
+    100036: Diamond.002_cell.017
+    100038: //RootNode
+    400000: Diamond.002
+    400002: Diamond.002_cell
+    400004: Diamond.002_cell.001
+    400006: Diamond.002_cell.002
+    400008: Diamond.002_cell.003
+    400010: Diamond.002_cell.004
+    400012: Diamond.002_cell.005
+    400014: Diamond.002_cell.006
+    400016: Diamond.002_cell.007
+    400018: Diamond.002_cell.008
+    400020: Diamond.002_cell.009
+    400022: Diamond.002_cell.010
+    400024: Diamond.002_cell.011
+    400026: Diamond.002_cell.012
+    400028: Diamond.002_cell.013
+    400030: Diamond.002_cell.014
+    400032: Diamond.002_cell.015
+    400034: Diamond.002_cell.016
+    400036: Diamond.002_cell.017
+    400038: //RootNode
+    2100000: No Name
+    2300000: Diamond.002
+    2300002: Diamond.002_cell
+    2300004: Diamond.002_cell.001
+    2300006: Diamond.002_cell.002
+    2300008: Diamond.002_cell.003
+    2300010: Diamond.002_cell.004
+    2300012: Diamond.002_cell.005
+    2300014: Diamond.002_cell.006
+    2300016: Diamond.002_cell.007
+    2300018: Diamond.002_cell.008
+    2300020: Diamond.002_cell.009
+    2300022: Diamond.002_cell.010
+    2300024: Diamond.002_cell.011
+    2300026: Diamond.002_cell.012
+    2300028: Diamond.002_cell.013
+    2300030: Diamond.002_cell.014
+    2300032: Diamond.002_cell.015
+    2300034: Diamond.002_cell.016
+    2300036: Diamond.002_cell.017
+    3300000: Diamond.002
+    3300002: Diamond.002_cell
+    3300004: Diamond.002_cell.001
+    3300006: Diamond.002_cell.002
+    3300008: Diamond.002_cell.003
+    3300010: Diamond.002_cell.004
+    3300012: Diamond.002_cell.005
+    3300014: Diamond.002_cell.006
+    3300016: Diamond.002_cell.007
+    3300018: Diamond.002_cell.008
+    3300020: Diamond.002_cell.009
+    3300022: Diamond.002_cell.010
+    3300024: Diamond.002_cell.011
+    3300026: Diamond.002_cell.012
+    3300028: Diamond.002_cell.013
+    3300030: Diamond.002_cell.014
+    3300032: Diamond.002_cell.015
+    3300034: Diamond.002_cell.016
+    3300036: Diamond.002_cell.017
+    4300000: Diamond.002
+    4300002: Diamond.002_cell
+    4300004: Diamond.002_cell.001
+    4300006: Diamond.002_cell.002
+    4300008: Diamond.002_cell.003
+    4300010: Diamond.002_cell.004
+    4300012: Diamond.002_cell.005
+    4300014: Diamond.002_cell.006
+    4300016: Diamond.002_cell.007
+    4300018: Diamond.002_cell.008
+    4300020: Diamond.002_cell.009
+    4300022: Diamond.002_cell.010
+    4300024: Diamond.002_cell.011
+    4300026: Diamond.002_cell.012
+    4300028: Diamond.002_cell.013
+    4300030: Diamond.002_cell.014
+    4300032: Diamond.002_cell.015
+    4300034: Diamond.002_cell.016
+    4300036: Diamond.002_cell.017
+  externalObjects: {}
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    preserveHierarchy: 0
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    previousCalculatedGlobalScale: 1
+    hasPreviousCalculatedGlobalScale: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

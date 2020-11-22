@@ -51,22 +51,25 @@ namespace Event
 
 		public void RemoveListener(Func<T, T> action)
 		{
+			LinkedListNode<HandlerAttributes<T>> temp = null;
 			foreach (HandlerAttributes<T> handler in handlers)
 			{
 				if (action == handler.action)
 				{
-					handlers.Remove(handlers.Find(handler));
+					temp = handlers.Find(handler);
 					break;
 				}
 			}
+			if (temp != null) { handlers.Remove(temp); }
 		}
 
-		public void Invoke(T arg)
+		public void Invoke(T arg, Action<T> callback = null)
 		{
 			foreach (HandlerAttributes<T> handler in handlers)
 			{
 				arg = handler.action.Invoke(arg);
 			}
+			callback?.Invoke(arg);
 		}
 	}
 
@@ -79,7 +82,6 @@ namespace Event
 				Invoke(new StateChangeEventArgs(oldState, newState));
 			}
 		}
-
 
 		public static StateChangeEvent onStateChange = new StateChangeEvent();
 	}

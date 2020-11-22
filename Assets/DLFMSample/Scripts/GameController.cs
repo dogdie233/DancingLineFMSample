@@ -31,6 +31,7 @@ namespace Level
         [HideInInspector] public static GameController instance = null;
         public Button bgButton;
         private static GameState _state = GameState.SelectingSkins;
+        public static int diamondNumber = 0;
         
         public static GameState State
 		{

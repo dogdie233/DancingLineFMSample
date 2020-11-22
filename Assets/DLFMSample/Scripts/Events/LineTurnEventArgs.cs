@@ -11,7 +11,7 @@ namespace Event
         public readonly Vector3 lastway;
         public Vector3 newway;
         public bool foucs;
-        public bool canceled = false;
+        public bool canceled;
 
         public LineTurnEventArgs(Line line, Vector3 lastway, Vector3 newway, bool foucs)
 		{

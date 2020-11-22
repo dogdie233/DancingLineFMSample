@@ -15,6 +15,7 @@ namespace Level
         {
             public EventBase<LineTurnEventArgs> onTurn = new EventBase<LineTurnEventArgs>();
             public EventBase<LineDieEventArgs> onDie = new EventBase<LineDieEventArgs>();
+            public EventBase<DiamondPickedEventArgs> onDiamondPicked = new EventBase<DiamondPickedEventArgs>();
             public UnityEvent OnExitGround;
             public UnityEvent OnEnterGround;
         }
@@ -23,6 +24,8 @@ namespace Level
         private new Rigidbody rigidbody;
         public float speed;
         public Vector3 nextWay;
+        public bool overWhenDie = true;
+        public ParticlesGroup[] particles;
         [HideInInspector] public bool moving = false;
         [HideInInspector] public bool _controlled = true;
         public EventsClass events;
@@ -138,6 +141,7 @@ namespace Level
                         rigidbody.isKinematic = true;
                         break;
                 }
+                if (overWhenDie) { GameController.State = GameState.WaitingRespawn; }
             }
             return e;
 		}
