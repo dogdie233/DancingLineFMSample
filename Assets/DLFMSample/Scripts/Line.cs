@@ -16,40 +16,28 @@ namespace Level
             public EventBase<LineTurnEventArgs> onTurn = new EventBase<LineTurnEventArgs>();
             public EventBase<LineDieEventArgs> onDie = new EventBase<LineDieEventArgs>();
             public EventBase<DiamondPickedEventArgs> onDiamondPicked = new EventBase<DiamondPickedEventArgs>();
+            public EventBase<CrownPickedEventArgs> onCrownPicked = new EventBase<CrownPickedEventArgs>();
             public UnityEvent OnExitGround;
             public UnityEvent OnEnterGround;
         }
 
         public GameObject bodyObject;
         private new Rigidbody rigidbody;
-        public float speed;
+        public float speed = 10f;
         public Vector3 nextWay;
         public bool overWhenDie = true;
+        [Range(0f, 1f)]
+        public float slopeRange = 0.1f;
         public ParticlesGroup[] particles;
         [HideInInspector] public bool moving = false;
-        [HideInInspector] public bool _controlled = true;
+        public bool controllable = true;
         public EventsClass events;
+        [HideInInspector] public bool died = false;
         private List<GameObject> touchings = new List<GameObject>();
         private Transform bodiesParent;
         private Transform body;
         private Vector3 lastTurnPosition;
         private bool previousFrameIsGrounded;
-
-        public bool IsControlled
-		{
-			get
-			{
-                return _controlled;
-			}
-			set
-            {
-                if (value != _controlled)
-				{
-                    UpdateTurnListener(value);
-                    _controlled = value;
-                }
-            }
-		}
 
         public bool IsGrounded
 		{
@@ -61,27 +49,22 @@ namespace Level
 			}
 		}
 
-        private void UpdateTurnListener(bool value)
-		{
-            if (value)
-                if (GameController.IsStarted) { GameController.instance.bgButton.onClick.AddListener(() => { Turn(false); }); }
-			else
-                if (GameController.IsStarted) { GameController.instance.bgButton.onClick.RemoveListener(() => { Turn(false); }); }
-        }
-
         void Awake()
 		{
             rigidbody = GetComponent<Rigidbody>();
             EventManager.onStateChange.AddListener((StateChangeEventArgs e) => {
-                if (e.newState == GameState.Playing && !e.canceled)
+                if (e.canceled) { return e; }
+				switch (e.newState)
 				{
-                    moving = true;
-                    if (_controlled) { GameController.instance.bgButton.onClick.AddListener(() => { Turn(false); }); }
+                    case GameState.Playing:
+                        moving = true;
+                        break;
+                    case GameState.WaitingRespawn:
+                        moving = false;
+                        break;
                 }
                 return e;
             }, Priority.Lowest);
-            events.onDie.AddListener(OnDie, Priority.Lowest);
-            events.onTurn.AddListener(OnTurn, Priority.Lowest);
         }
 
 		void Start()
@@ -127,42 +110,49 @@ namespace Level
         /// <param name="focus">强制转弯(即无视controlled, IsGrounded, State)</param>
         public void Turn(bool focus)
 		{
-            events.onTurn.Invoke(new LineTurnEventArgs(this, transform.localEulerAngles, nextWay, focus));
+            if ((IsGrounded && GameController.State == GameState.Playing && controllable && !died) || focus)
+            {
+                events.onTurn.Invoke(new LineTurnEventArgs(this, transform.localEulerAngles, nextWay, focus), (LineTurnEventArgs e) => {
+                    if (!e.canceled)
+                    {
+                        (transform.localEulerAngles, nextWay) = (nextWay, transform.localEulerAngles);
+                        CreateBody();
+                    }
+                });
+            }
 		}
 
-        public LineDieEventArgs OnDie(LineDieEventArgs e)
+        public void Respawn(LineRespawnAttributes attributes)
 		{
-            if (!e.canceled)
-			{
-                switch (e.cause)
-                {
-                    case DeathCause.Obstacle:
-                        moving = false;
-                        rigidbody.isKinematic = true;
-                        break;
-                }
-                if (overWhenDie) { GameController.State = GameState.WaitingRespawn; }
-            }
-            return e;
-		}
-
-        public LineTurnEventArgs OnTurn(LineTurnEventArgs e)
-		{
-            if (!e.canceled)
-			{
-                if ((IsGrounded && GameController.State == GameState.Playing) || e.foucs)
-                {
-                    (transform.localEulerAngles, nextWay) = (nextWay, transform.localEulerAngles);
-                    CreateBody();
-                }
-            }
-            return e;
-		}
+            transform.position = attributes.positon;
+            transform.localEulerAngles = attributes.way;
+            nextWay = attributes.nextWay;
+            rigidbody.isKinematic = false;
+            died = false;
+            Destroy(bodiesParent.gameObject);
+        }
 
         void OnCollisionEnter(Collision collision)
-		{
+        {
+            if (collision.gameObject.CompareTag("Obstacle"))
+            {
+                events.onDie.Invoke(new LineDieEventArgs(this, DeathCause.Obstacle), (LineDieEventArgs e) => {
+                    if (!e.canceled)
+                    {
+                        switch (e.cause)
+                        {
+                            case DeathCause.Obstacle:
+                                moving = false;
+                                rigidbody.isKinematic = true;
+                                break;
+                        }
+                        died = true;
+                        if (overWhenDie) { GameController.GameOver(); }
+                    }
+                });
+            }
+            if (collision.contacts[0].normal.y < 1f - slopeRange || collision.contacts[0].normal.y > 1f + slopeRange) { return; }
             touchings.Add(collision.gameObject);
-            if (collision.gameObject.CompareTag("Obstacle")) { events.onDie.Invoke(new LineDieEventArgs(this, DeathCause.Obstacle)); }
         }
 
         private void OnCollisionExit(Collision collision) { touchings.Remove(collision.gameObject); }

@@ -18,13 +18,13 @@ namespace Level
 		public ParticleAttributes[] particles;
 	}
 
-	public class Diamond : MonoBehaviour, ICollect
+	public class Diamond : MonoBehaviour, ICollection
 	{
 		public GameObject child;
 		public float speed;
 		public Line limit;
 		public ParticlesGroup[] particles;
-		private Transform particlesParent;
+		private static Transform particlesParent;
 		private bool picked = false;  // 被线吃
 		private bool destroyed = false;  // 被摧毁
 
@@ -43,11 +43,11 @@ namespace Level
 		public void Pick(bool lineEat)
 		{
 			if (picked || destroyed) { return; }  //被吃了
-			if (lineEat) { GameController.diamondNumber++; }
+			GameController.collections.Add(this);
 			child.SetActive(false);
 			//粒子效果
 			if (particles.Length == 0) { return; }
-			particlesParent = particlesParent == null ? particlesParent : new GameObject("ParticlesGroup").transform;
+			particlesParent = particlesParent != null ? particlesParent : new GameObject("ParticlesGroup").transform;
 			ParticlesGroup group = particles[Random.Range(0, particles.Length)];
 			foreach (ParticleAttributes particle in group.particles)
 			{
@@ -57,10 +57,15 @@ namespace Level
 
 		public void Recover()
 		{
+			if (picked) { GameController.collections.Remove(this); }
 			picked = destroyed = false;
-			if (picked) { GameController.diamondNumber--; }
 			child.SetActive(true);
-			Destroy(particlesParent);
+			Destroy(particlesParent.gameObject);
+		}
+
+		private void Awake()
+		{
+			picked = false;
 		}
 
 		private void Start()
@@ -82,12 +87,15 @@ namespace Level
 
 		private void OnTriggerEnter(Collider other)
 		{
+			if (picked) { return; }
 			if (other.CompareTag("Player"))
 			{
 				Line line = other.GetComponent<Line>();
 				if (limit != null && line != limit) { return; }
-				line.events.onDiamondPicked.Invoke(new DiamondPickedEventArgs(line, this, true), (DiamondPickedEventArgs e) => {
-					if (!e.canceled) { Pick(true); }
+				EventManager.onDiamondPicked.Invoke(new DiamondPickedEventArgs(line, this, true), (DiamondPickedEventArgs e1) => {
+					line.events.onDiamondPicked.Invoke(new DiamondPickedEventArgs(line, this, true), (DiamondPickedEventArgs e2) => {
+						if (!e1.canceled && !e2.canceled) { Pick(true); }
+					});
 				});
 			}
 		}

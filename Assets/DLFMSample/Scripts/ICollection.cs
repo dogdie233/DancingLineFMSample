@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface ICollect
+public interface ICollection
 {
     void Pick();
     void Recover();
