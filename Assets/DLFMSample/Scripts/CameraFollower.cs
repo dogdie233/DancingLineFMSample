@@ -45,22 +45,13 @@ namespace Level
         public void Rotate(Vector2 target, float distance, float duration, AnimationCurve curve)
         {
             if (!enable) return;
-            if (rotaterX != null)
-            {
-                rotaterX.Kill(false);
-                rotaterX = null;
-            }
-            if (rotaterY != null)
-            {
-                rotaterY.Kill(false);
-                rotaterY = null;
-            }
-            if (distanceChanger != null)
-            {
-                distanceChanger.Kill(false);
-                distanceChanger = null;
-            }
-			if (target.x != transform.eulerAngles.x)
+            rotaterX?.Kill(false);
+            rotaterX = null;
+            rotaterY?.Kill(false);
+            rotaterY = null;
+            distanceChanger?.Kill(false);
+            distanceChanger = null;
+            if (target.x != transform.eulerAngles.x)
 				rotaterX = DOTween.To(() => transform.eulerAngles.x, x => { transform.RotateAround(followPoint, Vector3.right, x - transform.eulerAngles.x); }, target.x, duration).SetEase(curve);
 			if (target.y != transform.eulerAngles.y)
 				rotaterY = DOTween.To(() => transform.eulerAngles.y, y => { transform.RotateAround(followPoint, Vector3.up, y - transform.eulerAngles.y); }, target.y, duration).SetEase(curve);
