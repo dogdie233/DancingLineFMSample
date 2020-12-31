@@ -13,4 +13,4 @@ A Dancing Line Fanmade Sample base on Unity3D
 - [ ] 标准ui
 
 # Associated projects: 
-- [ScriptOnly](https://github.com/dogdie233/DLFMSampleReloaded-ScriptOnly)
+- [ScriptOnly](https://github.com/dogdie233/DancingLineFMSample-ScriptOnly)
