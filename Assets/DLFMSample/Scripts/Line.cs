@@ -1,10 +1,10 @@
 using Event;
+using Level.Skins;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.UI;
 
 namespace Level
 {
@@ -17,156 +17,194 @@ namespace Level
             public EventBase<LineDieEventArgs> onDie = new EventBase<LineDieEventArgs>();
             public EventBase<DiamondPickedEventArgs> onDiamondPicked = new EventBase<DiamondPickedEventArgs>();
             public EventBase<CrownPickedEventArgs> onCrownPicked = new EventBase<CrownPickedEventArgs>();
+            public EventBase<SkinChangeEventArgs> onSkinChange = new EventBase<SkinChangeEventArgs>();
             public UnityEvent OnExitGround;
             public UnityEvent OnEnterGround;
         }
 
         public GameObject bodyObject;
         private new Rigidbody rigidbody;
-        public float speed = 10f;
         public Vector3 nextWay;
-        public bool overWhenDie = true;
+        public float speed = 10f;
         [Range(0f, 1f)]
         public float slopeRange = 0.1f;
-        public ParticlesGroup[] particles;
-        [HideInInspector] public bool moving = false;
+        private bool moving = false;
         public bool controllable = true;
+        public bool overWhenDie = true;
         public EventsClass events;
         [HideInInspector] public bool died = false;
         private List<GameObject> touchings = new List<GameObject>();
-        private Transform bodiesParent;
-        private Transform body;
-        private Vector3 lastTurnPosition;
         private bool previousFrameIsGrounded;
+        [HideInInspector] public LineRespawnAttributes startAttributes;
+        public SkinBase skin;
+        private SkinBase[] skins;
 
         public bool IsGrounded
 		{
-			get
+            get => (touchings.Count != 0 || (rigidbody.velocity.y >= -0.1f && rigidbody.velocity.y <= 0.1f && Physics.gravity.y != 0f)) ? true : false;
+        }
+
+        public bool Moving
+		{
+            get => moving;
+			set
 			{
-                if (touchings.Count == 0)
-                    return false;
-                return true;
+                if (moving == value) { return; }
+                moving = value;
 			}
 		}
 
-        void Awake()
+        private void Awake()
 		{
             rigidbody = GetComponent<Rigidbody>();
-            EventManager.onStateChange.AddListener((StateChangeEventArgs e) => {
+            EventManager.onStateChange.AddListener((StateChangeEventArgs e) =>
+            {
                 if (e.canceled) { return e; }
 				switch (e.newState)
 				{
                     case GameState.Playing:
-                        moving = true;
+                        Moving = true;
                         break;
                     case GameState.WaitingRespawn:
-                        moving = false;
+                    case GameState.GameOver:
+                        Moving = false;
+                        break;
+                    case GameState.SelectingSkins:
+                        Moving = false;
+                        Respawn(startAttributes);
                         break;
                 }
                 return e;
-            }, Priority.Lowest);
+            }, Priority.Monitor);
         }
 
-		void Start()
+		private void Start()
         {
+            skins = SkinManager.InstantiateSkins(this);  // ÂÆû‰æãÂåñÁöÆËÇ§
+            ChangeSkin(SkinManager.defaultSkin);
             previousFrameIsGrounded = IsGrounded;
+            GameController.lines.Add(this);
+            startAttributes = new LineRespawnAttributes(this, transform.position, transform.localEulerAngles, nextWay, controllable);
         }
 
-		void Update()
+		private void Update()
         {
-            if (moving)
-            {
-                transform.Translate(Vector3.forward * speed * Time.deltaTime, Space.Self);
-                if (body != null)
-                {
-                    body.position = Vector3.Lerp(lastTurnPosition, transform.position, 0.5f);
-                    body.localScale = new Vector3(body.localScale.x, body.localScale.y, Vector3.Distance(lastTurnPosition, transform.position));
-                }
+            if (Moving)
+			{
+                gameObject.transform.Translate(Vector3.forward * speed * Time.deltaTime, Space.Self);
             }
             if (previousFrameIsGrounded != IsGrounded)
 			{
                 previousFrameIsGrounded = IsGrounded;
                 if (IsGrounded)
 				{
-                    CreateBody();
+                    skin.EndFly();
                     events.OnEnterGround.Invoke();
 				}
 				else
 				{
-                    if (body != null)  //œ¬¬‰œﬂ…Ì”Îµÿ∞Â∂‘∆Î
-                    {
-                        body.localScale -= Vector3.forward * GetComponent<BoxCollider>().size.z;
-                        body.Translate(Vector3.back * GetComponent<BoxCollider>().size.z / 2, Space.Self);
-                        body = null;
-                    }
+                    skin.StartFly();
                     events.OnExitGround.Invoke();
 				}
 			}
+            skin.Update();
         }
 
         /// <summary>
-        ///  πœﬂ◊™Õ‰
+        /// ‰ΩøÁ∫øËΩ¨ÂºØ
         /// </summary>
-        /// <param name="focus">«ø÷∆◊™Õ‰(º¥Œﬁ ”controlled, IsGrounded, State)</param>
+        /// <param name="focus">ÊòØÂê¶‰∏∫Âº∫Âà∂ËΩ¨ÂºØ(Âç≥Êó†ËßÜcontrolled, IsGrounded, State)</param>
         public void Turn(bool focus)
 		{
             if ((IsGrounded && GameController.State == GameState.Playing && controllable && !died) || focus)
             {
-                events.onTurn.Invoke(new LineTurnEventArgs(this, transform.localEulerAngles, nextWay, focus), (LineTurnEventArgs e) => {
-                    if (!e.canceled)
+                EventManager.onLineTurn.Invoke(new LineTurnEventArgs(this, transform.localEulerAngles, nextWay, focus), e1 =>
+                {
+                    events.onTurn.Invoke(e1, e2 =>
                     {
-                        (transform.localEulerAngles, nextWay) = (nextWay, transform.localEulerAngles);
-                        CreateBody();
-                    }
+                        if (!e2.canceled)
+                        {
+                            if (IsGrounded || focus)
+                            {
+                                (transform.localEulerAngles, nextWay) = (nextWay, transform.localEulerAngles);
+                                skin.Turn(focus);
+                            }
+                        }
+                    });
                 });
             }
 		}
 
         public void Respawn(LineRespawnAttributes attributes)
 		{
-            transform.position = attributes.positon;
+            transform.position = attributes.position;
             transform.localEulerAngles = attributes.way;
             nextWay = attributes.nextWay;
-            rigidbody.isKinematic = false;
+            controllable = attributes.controllable;
             died = false;
-            Destroy(bodiesParent.gameObject);
+            skin.Respawn();
         }
 
-        void OnCollisionEnter(Collision collision)
+        private void OnCollisionEnter(Collision collision)
         {
             if (collision.gameObject.CompareTag("Obstacle"))
             {
-                events.onDie.Invoke(new LineDieEventArgs(this, DeathCause.Obstacle), (LineDieEventArgs e) => {
-                    if (!e.canceled)
+                EventManager.onLineDie.Invoke(new LineDieEventArgs(this, DeathCause.Obstacle), e1 =>
+                {
+                    events.onDie.Invoke(e1, (LineDieEventArgs e2) =>
                     {
-                        switch (e.cause)
+                        if (!e2.canceled)
                         {
-                            case DeathCause.Obstacle:
-                                moving = false;
-                                rigidbody.isKinematic = true;
-                                break;
+                            died = true;
+                            switch (e2.cause)
+                            {
+                                case DeathCause.Obstacle:
+                                    Moving = false;
+                                    break;
+                                case DeathCause.Air:
+                                    break;
+                                case DeathCause.Water:
+                                    break;
+                            }
+                            skin.Die(e2.cause);
+                            if (overWhenDie) { GameController.GameOver(true); }
                         }
-                        died = true;
-                        if (overWhenDie) { GameController.GameOver(); }
-                    }
+                    });
                 });
             }
-            if (collision.contacts[0].normal.y < 1f - slopeRange || collision.contacts[0].normal.y > 1f + slopeRange) { return; }
+            if (collision.contacts[0].normal.y < 1f - slopeRange || collision.contacts[0].normal.y > 1f + slopeRange) { return; }  // ÊúÄÂ§ßÂÖÅËÆ∏ÊéßÂà∂Âù°Â∫¶
             touchings.Add(collision.gameObject);
         }
 
-        private void OnCollisionExit(Collision collision) { touchings.Remove(collision.gameObject); }
+        private void OnCollisionExit(Collision collision) => touchings.Remove(collision.gameObject);
 
-        private void CreateBody()
-        {
-            if (bodiesParent == null) { bodiesParent = new GameObject("Bodies").transform; }
-            if (body != null && (transform.localScale.z / 2) < Vector3.Distance(lastTurnPosition, transform.position))
-            {
-                body.localScale += Vector3.forward * transform.localScale.z / 2;
-                body.Translate(Vector3.forward * transform.localScale.z / 4, Space.Self);
+        public void ChangeSkin(Type newSkinType)
+		{
+            if (skin != null && skin.GetType() == newSkinType) { return; }
+            bool canceled = false;
+            if (skin != null)  // ÂàùÂßãÂåñÁöÑÊó∂ÂÄôskinÊòØnull
+			{
+                EventManager.onSkinChange.Invoke(new SkinChangeEventArgs(this, skin.GetType(), newSkinType), e1 =>
+                {
+                    events.onSkinChange.Invoke(e1, e2 =>
+                    {
+                        canceled = e2.canceled;
+                        newSkinType = e2.newSkin;
+                    });
+                });
             }
-            body = Instantiate(bodyObject, transform.position, transform.rotation, bodiesParent).transform;
-            lastTurnPosition = transform.position;
-        }
+            if (!canceled)
+			{
+                foreach (SkinBase skinBase in skins)
+                {
+                    if (skinBase.GetType() == newSkinType)
+                    {
+                        skinBase.Enable();
+                        skin = skinBase;
+                    }
+                    else { skin.Disable(); }
+                }
+            }
+		}
     }
 }

@@ -1,18 +1,18 @@
 fileFormatVersion: 2
-guid: 327ab93ec7ef2b846b6aecad02c7b833
-timeCreated: 1549697148
+guid: e54fd1d476d7d174aad7a4ccc1e90f5b
+timeCreated: 1549696546
 licenseType: Free
 ModelImporter:
   serializedVersion: 22
   fileIDToRecycleName:
-    100000: //RootNode
-    100002: Diamnet_0
-    400000: //RootNode
-    400002: Diamnet_0
-    2100000: Diamnet_0Mat
-    2300000: Diamnet_0
-    3300000: Diamnet_0
-    4300000: Diamnet_0
+    100000: default_0
+    100002: //RootNode
+    400000: default_0
+    400002: //RootNode
+    2100000: default_0Mat
+    2300000: default_0
+    3300000: default_0
+    4300000: default_0
   externalObjects: {}
   materials:
     importMaterials: 1

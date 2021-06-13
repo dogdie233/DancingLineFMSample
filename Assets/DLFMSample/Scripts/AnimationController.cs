@@ -16,26 +16,25 @@ namespace Level.Animations
             {
                 switch (args.newState)
                 {
-                    case Level.GameState.Playing:
+                    case GameState.SelectingSkins:
+                        timeline.time = 0f;
+                        timeline.Stop();
+                        break;
+                    case GameState.Playing:
                         timeline.Play();
                         break;
-                    case Level.GameState.WaitingRespawn:
+                    case GameState.WaitingRespawn:
+                    case GameState.GameOver:
                         timeline.Pause();
                         break;
                 }
                 return args;
-            }, Priority.Lowest);
+            }, Priority.Monitor);
             EventManager.onRespawn.AddListener(args =>
             {
                 timeline.time = args.crown.time;
                 return args;
-            }, Priority.Lowest);
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
-
+            }, Priority.Monitor);
         }
     }
 }

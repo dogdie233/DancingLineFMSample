@@ -8,16 +8,16 @@ namespace Event
     public class LineTurnEventArgs
     {
         public readonly Line line;
-        public readonly Vector3 lastway;
-        public Vector3 newway;
+        public readonly Vector3 lastWay;
+        public Vector3 newWay;
         public bool foucs;
         public bool canceled;
 
-        public LineTurnEventArgs(Line line, Vector3 lastway, Vector3 newway, bool foucs)
+        public LineTurnEventArgs(Line line, Vector3 lastWay, Vector3 newWay, bool foucs)
 		{
             this.line = line;
-            this.lastway = lastway;
-            this.newway = newway;
+            this.lastWay = lastWay;
+            this.newWay = newWay;
             this.foucs = foucs;
 		}
     }
