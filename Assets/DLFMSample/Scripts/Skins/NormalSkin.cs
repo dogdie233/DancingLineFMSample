@@ -73,8 +73,8 @@ namespace Level.Skins
 
 		public override void Respawn()
 		{
-			GameObject.Destroy(particlesParent);
-			GameObject.Destroy(bodiesParent);
+			GameObject.Destroy(particlesParent.gameObject);
+			GameObject.Destroy(bodiesParent.gameObject);
 			particlesParent = new GameObject("ParticlesParent").transform;
 			bodiesParent = new GameObject("BodiesParent").transform;
 		}
