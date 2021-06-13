@@ -25,6 +25,3 @@ If applicable, add screenshots to help explain your problem.
 
 **Version**
 The version where this bug occurs.
-
- - Assets Version:
- - Script Version:
