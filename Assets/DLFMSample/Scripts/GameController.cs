@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.Events;
 using UnityEngine.Playables;
 using UnityEngine.UI;
@@ -19,22 +20,25 @@ namespace Level
 {
     public enum GameState
 	{
-        SelectingSkins,  // Ñ¡ÔñÆ¤·ô½×¶Î
-        WaitingStart,  // µÈ´ı¿ªÊ¼½×¶Î
-        Playing,  // ÕıÔÚÓÎÏ·½×¶Î
-        WaitingRespawn,  // È·ÈÏ¸´»î½×¶Î
-        WaitingContinue,  // ¸´»îºóµÈ´ı¿ªÊ¼
-        GameOver,  // ÓÎÏ·½áÊø(¾Ü¾ø¸´»î)
+        SelectingSkins,  // é€‰æ‹©çš®è‚¤é˜¶æ®µ
+        WaitingStart,  // ç­‰å¾…å¼€å§‹é˜¶æ®µ
+        Playing,  // æ­£åœ¨æ¸¸æˆé˜¶æ®µ
+        WaitingRespawn,  // ç¡®è®¤å¤æ´»é˜¶æ®µ
+        WaitingContinue,  // å¤æ´»åç­‰å¾…å¼€å§‹
+        GameOver,  // æ¸¸æˆç»“æŸ(æ‹’ç»å¤æ´»)
 	}
 
     public class GameController : MonoBehaviour
     {
         [HideInInspector] public static GameController instance = null;
         public Button bgButton;
+        public static List<Line> lines = new List<Line>();
+        public AudioMixerGroup soundMixerGroup;
+        public BGMController bgmController;
         private static GameState _state = GameState.SelectingSkins;
         public static List<ICollection> collections = new List<ICollection>();
         public static List<Crown> crowns;
-        
+
         public static GameState State
 		{
 			get { return _state; }
@@ -42,25 +46,39 @@ namespace Level
             {
                 if (_state != value)
                 {
-                    EventManager.onStateChange.Invoke(new StateChangeEventArgs(_state, value), (StateChangeEventArgs e) => {
-                        if (!e.canceled) { _state = e.newState; }
+                    EventManager.onStateChange.Invoke(new StateChangeEventArgs(_state, value), (StateChangeEventArgs e) =>
+                    {
+                        if (!e.canceled)
+                        {
+                            _state = e.newState;
+                            if (e.newState == GameState.SelectingSkins)  // æ¸…ç©ºCollections
+                            {
+                                for (int i = collections.Count - 1; i >= 0f; i--)
+                                {
+                                    collections[i].Recover();
+                                }
+                                collections.Clear();
+                            }
+                        }
                     });
                 }
             }
         }
 
-		private void Update()
-		{
-            Debug.Log(_state);
-		}
-
 		public static bool IsStarted
 		{
-            get { return !(_state == GameState.SelectingSkins || _state == GameState.WaitingStart); }
+            get => !(_state == GameState.SelectingSkins || _state == GameState.WaitingStart);
         }
 
 		private void Awake()
         {
+            if (instance == null && instance != this) { instance = this; }
+			else
+			{
+                Debug.LogError("[Error] There is more than one Game Controller");
+                this.enabled = false;
+                return;
+            }
             bgButton.onClick.AddListener(() => {
                 switch (_state)
 				{
@@ -73,45 +91,69 @@ namespace Level
                         break;
 				}
             });
-            if (instance == null && instance != this)
-                instance = this;
-            else
-                Debug.LogError("[Error] There is more than one Game Controller");
 		}
 
-        public static void Respawn(Crown crown)
+		private void Update()
 		{
-            if (EventManager.onRespawn.Invoke(new RespawnEventArgs(crown)).canceled) { return; }
-            EventManager.onStateChange.Invoke(new StateChangeEventArgs(_state, GameState.WaitingContinue), (StateChangeEventArgs e) => {
-                if (!e.canceled)
-				{
-                    _state = GameState.WaitingContinue;
-                    foreach (LineRespawnAttributes attribute in crown.lineRespawnAttributes)
+            // æ¸¸æˆç»“æŸæ£€æµ‹
+			/*if (bgmController.Time == 0f && State == GameState.Playing)  // éŸ³ä¹ç»“æŸTimeå½’0
+            {
+                GameOver(false);
+			}*/
+		}
+
+		public static void Respawn(Crown crown)
+		{
+            EventManager.onRespawn.Invoke(new RespawnEventArgs(crown), e1 =>
+            {
+                if (e1.canceled) { return; }
+                EventManager.onStateChange.Invoke(new StateChangeEventArgs(_state, GameState.WaitingContinue), (StateChangeEventArgs e2) =>
+                {
+                    if (!e2.canceled)
                     {
-                        attribute.line.Respawn(attribute);
+                        _state = GameState.WaitingContinue;
+                        foreach (LineRespawnAttributes attribute in crown.lineRespawnAttributes)
+                        {
+                            attribute.line.Respawn(attribute);
+                        }
+                        for (int i = collections.Count - 1; i >= 0f; i--)
+                        {
+                            if (collections[i] is Crown && (Crown)collections[i] == crown) { break; }
+                            collections[i].Recover();
+                            collections.RemoveAt(i);
+                        }
+                        crown.Respawn();
                     }
-                    for (int i = collections.Count - 1; i >= 0f; i--)
-                    {
-                        if (collections[i] is Crown && (Crown)collections[i] == crown) { break; }
-                        collections[i].Recover();
-                        collections.RemoveAt(i);
-                    }
-                    crown.Respawn();
-                }
+                });
             });
         }
 
-        public static void GameOver()
+        public static void GameOver(bool fail)
 		{
-            foreach (ICollection collection in collections)
-            {
-                if (collection is Crown)
-				{
-                    State = GameState.WaitingRespawn;
-                    return;
-				}
-			}
+            if (fail)
+			{
+                foreach (ICollection collection in collections)
+                {
+                    if (collection is Crown)
+                    {
+                        State = GameState.WaitingRespawn;
+                        return;
+                    }
+                }
+            }
             State = GameState.GameOver;
 		}
+
+        public static void PlaySound(AudioClip clip)
+		{
+            GameObject dieSoundObj = new GameObject("SoundPlayer");
+            dieSoundObj.transform.position = Camera.main.transform.position;
+            AudioSource audioSource = dieSoundObj.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+            audioSource.clip = clip;
+            audioSource.outputAudioMixerGroup = instance.soundMixerGroup;
+            audioSource.Play();
+            Destroy(dieSoundObj, clip.length);
+        }
 	}
 }

@@ -8,10 +8,10 @@ namespace Event
 	public class CrownPickedEventArgs
 	{
 		public readonly Line line;
-		public readonly Crown crown;
+		public readonly Level.Crown crown;
 		public bool canceled = false;
 
-		public CrownPickedEventArgs (Line line, Crown crown)
+		public CrownPickedEventArgs (Line line, Level.Crown crown)
 		{
 			this.line = line;
 			this.crown = crown;

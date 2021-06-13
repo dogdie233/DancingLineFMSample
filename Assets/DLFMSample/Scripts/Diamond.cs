@@ -5,19 +5,6 @@ using UnityEngine;
 
 namespace Level
 {
-	[System.Serializable]
-	public class ParticleAttributes
-	{
-		public GameObject obj;
-		public float alive;
-	}
-
-	[System.Serializable]
-	public class ParticlesGroup
-	{
-		public ParticleAttributes[] particles;
-	}
-
 	public class Diamond : MonoBehaviour, ICollection
 	{
 		public GameObject child;
@@ -38,13 +25,15 @@ namespace Level
 			get { return destroyed; }
 		}
 
-		public void Pick() { Pick(true); }
-
-		public void Pick(bool lineEat)
+		public void Pick()
 		{
 			if (picked || destroyed) { return; }  //被吃了
 			GameController.collections.Add(this);
 			child.SetActive(false);
+			foreach (Line line in GameController.lines)
+			{
+				line.skin.PickDiamond(this, line);
+			}
 			//粒子效果
 			if (particles.Length == 0) { return; }
 			particlesParent = particlesParent != null ? particlesParent : new GameObject("ParticlesGroup").transform;
@@ -78,13 +67,6 @@ namespace Level
 			child.transform.Rotate(Vector3.up, speed, Space.Self);
 		}
 
-		private DiamondPickedEventArgs OnDiamondPicked(DiamondPickedEventArgs e)
-		{
-			if (e.diamond != this) { return e;}
-			if (!e.canceled) { Pick(true); }
-			return e;
-		}
-
 		private void OnTriggerEnter(Collider other)
 		{
 			if (picked) { return; }
@@ -92,9 +74,11 @@ namespace Level
 			{
 				Line line = other.GetComponent<Line>();
 				if (limit != null && line != limit) { return; }
-				EventManager.onDiamondPicked.Invoke(new DiamondPickedEventArgs(line, this, true), (DiamondPickedEventArgs e1) => {
-					line.events.onDiamondPicked.Invoke(new DiamondPickedEventArgs(line, this, true), (DiamondPickedEventArgs e2) => {
-						if (!e1.canceled && !e2.canceled) { Pick(true); }
+				EventManager.onDiamondPicked.Invoke(new DiamondPickedEventArgs(line, this, true), (DiamondPickedEventArgs e1) =>
+				{
+					line.events.onDiamondPicked.Invoke(e1, (DiamondPickedEventArgs e2) =>
+					{
+						if (!e1.canceled && !e2.canceled) { Pick(); }
 					});
 				});
 			}

@@ -4,59 +4,120 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using DG.Tweening;
+using Event;
 
 namespace Level
 {
     public class CameraFollower : MonoBehaviour
     {
-        public Transform line;
-        public float distance;
-        private Vector3 currentVelocity = Vector3.zero;
+        public Line line;
+        public Transform arm;
         public float smoothTime;
-        public bool enable;
-        private Vector3 followPoint;
-        private Vector3 vector;
-        private Tweener rotaterX;
-        private Tweener rotaterY;
+        public Vector3 initPivotOffset;
+        private Vector3 pivotOffset;  // 焦点偏移
+        private Vector3 currentVelocity = Vector3.zero;
+        [HideInInspector] public Vector3 followPoint;
+        private Tweener rotatorX;
+        private Tweener rotatorY;
         private Tweener distanceChanger;
+        private Tweener pivotChanger;
+        private float startSmoothTime;
+        private Quaternion startArmRotation;
+        private float startDistance;
 
         void Start()
         {
-            followPoint = line.position;
-            Rotate(transform.eulerAngles, distance, 0.00001f, new AnimationCurve(new Keyframe[] { new Keyframe(0f, 0f, 0f, 0f) }));
-            vector = (transform.position - followPoint) / Vector3.Distance(transform.position, followPoint) * distance;
+            startSmoothTime = smoothTime;
+            startArmRotation = arm.localRotation;
+            startDistance = transform.localPosition.z;
+            followPoint = line.transform.position;
+            pivotOffset = initPivotOffset;
+            arm.transform.position = followPoint + pivotOffset;
         }
+
+        private void OnEnable()
+		{
+            EventManager.onStateChange.AddListener(e =>
+            {
+                if (e.canceled) { return e; }
+                switch (e.newState)
+				{
+                    case GameState.WaitingRespawn:
+                    case GameState.GameOver:
+                        KillTweener();
+                        break;
+                    case GameState.SelectingSkins:
+                        KillTweener();
+                        smoothTime = startSmoothTime;
+                        arm.localRotation = startArmRotation;
+                        transform.localPosition = new Vector3(0f, 0f, startDistance);
+                        followPoint = line.startAttributes.position;
+                        pivotOffset = initPivotOffset;
+                        arm.transform.position = followPoint + pivotOffset;
+                        break;
+				}
+                return e;
+            }, Priority.Monitor);
+		}
 
         void Update()
         {
-            if (!enable) return;
-            followPoint = Vector3.SmoothDamp(followPoint, line.position, ref currentVelocity, smoothTime);
-            transform.LookAt(followPoint);
-            transform.position = followPoint + vector;
+            if (GameController.State == GameState.Playing)
+			{
+                followPoint = Vector3.SmoothDamp(followPoint, line.transform.position, ref currentVelocity, smoothTime);
+                arm.transform.position = followPoint + pivotOffset;
+            }
+        }
+
+        private void KillTweener()
+		{
+            rotatorX?.Kill(false);
+            rotatorX = null;
+            rotatorY?.Kill(false);
+            rotatorY = null;
+            distanceChanger?.Kill(false);
+            distanceChanger = null;
+            pivotChanger?.Kill(false);
+            pivotChanger = null;
         }
 
         /// <summary>
-        /// 转弯啊啊啊啊啊啊
+        /// 旋转啊啊啊啊啊啊
         /// </summary>
         /// <param name="target">目标角度</param>
         /// <param name="distance">距离</param>
         /// <param name="duration">消耗时间</param>
         /// <param name="curve">时间曲线</param>
-        public void Rotate(Vector2 target, float distance, float duration, AnimationCurve curve)
+        public void Rotate(Vector2 target, float distance, float duration, Vector3 pivotOffset, AnimationCurve curve)
         {
-            if (!enable) return;
-            rotaterX?.Kill(false);
-            rotaterX = null;
-            rotaterY?.Kill(false);
-            rotaterY = null;
-            distanceChanger?.Kill(false);
-            distanceChanger = null;
-            if (target.x != transform.eulerAngles.x)
-				rotaterX = DOTween.To(() => transform.eulerAngles.x, x => { transform.RotateAround(followPoint, Vector3.right, x - transform.eulerAngles.x); }, target.x, duration).SetEase(curve);
-			if (target.y != transform.eulerAngles.y)
-				rotaterY = DOTween.To(() => transform.eulerAngles.y, y => { transform.RotateAround(followPoint, Vector3.up, y - transform.eulerAngles.y); }, target.y, duration).SetEase(curve);
-			if (Vector3.Distance(transform.position, followPoint) != distance)
-				distanceChanger = DOTween.To(() => Vector3.Distance(transform.position, followPoint), d => vector = (transform.position - followPoint) / Vector3.Distance(transform.position, followPoint) * d, distance, duration).SetEase(curve);
-		}
-	}
+            KillTweener();
+            if (target.x != arm.localEulerAngles.x)
+			{
+                rotatorX = DOTween.To(() => arm.localEulerAngles.x, x =>
+                {
+                    arm.localEulerAngles = new Vector3(x, arm.localEulerAngles.y, arm.localEulerAngles.z);
+                }, target.x, duration).SetEase(curve);
+            }
+            if (target.y != arm.localEulerAngles.y)
+			{
+                rotatorY = DOTween.To(() => arm.localEulerAngles.y, y =>
+                {
+                    arm.localEulerAngles = new Vector3(arm.localEulerAngles.x, y, arm.localEulerAngles.z);
+                }, target.y, duration).SetEase(curve);
+            }
+            distance = -1f * Mathf.Abs(distance);
+            if (Mathf.Abs(transform.localPosition.z) != distance)
+			{
+                Vector3 startPivotOffset = this.pivotOffset;
+                distanceChanger = DOTween.To(() => transform.localPosition.z, d =>
+                {
+                    transform.Translate(0f, 0f, d - transform.localPosition.z, Space.Self);
+                }, distance, duration).SetEase(curve);
+            }
+            if (pivotOffset != this.pivotOffset)
+			{
+                pivotChanger = DOTween.To(() => this.pivotOffset, v => this.pivotOffset = v, pivotOffset, duration).SetEase(curve);
+            }
+        }
+    }
 }

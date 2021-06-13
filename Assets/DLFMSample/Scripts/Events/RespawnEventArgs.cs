@@ -7,10 +7,10 @@ namespace Event
 {
 	public class RespawnEventArgs
 	{
-		public readonly Crown crown;
+		public readonly Level.Crown crown;
 		public bool canceled = false;
 
-		public RespawnEventArgs(Crown crown)
+		public RespawnEventArgs(Level.Crown crown)
 		{
 			this.crown = crown;
 		}

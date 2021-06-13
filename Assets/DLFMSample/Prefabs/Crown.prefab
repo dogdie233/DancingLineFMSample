@@ -127,6 +127,8 @@ MonoBehaviour:
   speed: 1
   time: 5
   limit: {fileID: 0}
+  lineRespawnAttributes: []
+  auto: 0
 --- !u!65 &7288285657691395240
 BoxCollider:
   m_ObjectHideFlags: 0
