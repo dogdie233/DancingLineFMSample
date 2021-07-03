@@ -8,6 +8,7 @@ namespace Level.Skins
 	{
 		private Vector3 lastTurnPosition;
 		private BoxCollider lineCollider;
+		private MeshRenderer meshRenderer;
 		private Transform body;
 		private Transform bodiesParent;
 		private Transform particlesParent;
@@ -17,6 +18,7 @@ namespace Level.Skins
 			base.line = line;
 			GameObject prefab = Resources.Load<GameObject>("LineSkins/Normal/Object");
 			gameObject = GameObject.Instantiate(prefab, line.transform.position, line.transform.rotation, line.transform);  // 实例化皮肤go
+			meshRenderer = gameObject.GetComponent<MeshRenderer>();
 			skinInfo = gameObject.GetComponent<NormalSkinInfo>();
 			lineCollider = line.GetComponent<BoxCollider>();
 			particlesParent = new GameObject("ParticlesParent").transform;
@@ -95,6 +97,18 @@ namespace Level.Skins
 		}
 
 		public override void Win() { }
+
+		public override void Enable()
+		{
+			base.Enable();
+			meshRenderer.enabled = true;
+		}
+
+		public override void Disable()
+		{
+			base.Disable();
+			meshRenderer.enabled = false;
+		}
 
 		private void CreateBody()
 		{
