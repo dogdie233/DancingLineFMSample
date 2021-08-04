@@ -33,6 +33,7 @@ namespace Level.Skins
 				{
 					body.position = Vector3.Lerp(lastTurnPosition, line.transform.position, 0.5f);
 					body.localScale = new Vector3(body.localScale.x, body.localScale.y, Vector3.Distance(lastTurnPosition, line.transform.position));
+					body.LookAt(line.transform);
 				}
 			}
 		}

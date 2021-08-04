@@ -26,7 +26,7 @@ namespace Level.Skins
 						.GetTypes()
 						.Where(t => typeof(SkinBase).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract)
 						.ToArray();
-			Debug.Log($"Find {_skins.Length} skins");
+			Debug.Log($"Found {_skins.Length} skins");
 		}
 
 		public static SkinBase[] InstantiateSkins(Line line)

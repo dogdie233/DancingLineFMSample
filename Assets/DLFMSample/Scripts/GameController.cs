@@ -93,15 +93,6 @@ namespace Level
             });
 		}
 
-		private void Update()
-		{
-            // 游戏结束检测
-			/*if (bgmController.Time == 0f && State == GameState.Playing)  // 音乐结束Time归0
-            {
-                GameOver(false);
-			}*/
-		}
-
 		public static void Respawn(Crown crown)
 		{
             EventManager.onRespawn.Invoke(new RespawnEventArgs(crown), e1 =>
