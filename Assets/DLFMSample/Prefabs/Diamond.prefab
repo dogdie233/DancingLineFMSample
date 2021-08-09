@@ -88,6 +88,7 @@ GameObject:
   - component: {fileID: 5781767618378282811}
   - component: {fileID: 7882205468427986959}
   - component: {fileID: 1824397075314322082}
+  - component: {fileID: 3380099887641764058}
   m_Layer: 0
   m_Name: Diamond
   m_TagString: Untagged
@@ -144,3 +145,20 @@ MonoBehaviour:
       alive: 30
     - obj: {fileID: 1705229686537152, guid: 164e204361949e94481f389dad70126e, type: 3}
       alive: 30
+  animation: {fileID: 3380099887641764058}
+--- !u!111 &3380099887641764058
+Animation:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5781767618378378011}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Animation: {fileID: 7400000, guid: f24e0890de7354c40b0b3f440567ae35, type: 2}
+  m_Animations:
+  - {fileID: 7400000, guid: f24e0890de7354c40b0b3f440567ae35, type: 2}
+  m_WrapMode: 0
+  m_PlayAutomatically: 1
+  m_AnimatePhysics: 0
+  m_CullingType: 0

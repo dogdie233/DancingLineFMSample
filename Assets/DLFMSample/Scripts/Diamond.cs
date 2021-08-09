@@ -8,9 +8,10 @@ namespace Level
 	public class Diamond : MonoBehaviour, ICollection
 	{
 		public GameObject child;
-		public float speed;
+		[SerializeField] private float speed;
 		public Line limit;
 		public ParticlesGroup[] particles;
+		public new Animation animation;
 		private static Transform particlesParent;
 		private bool picked = false;  // 被线吃
 		private bool destroyed = false;  // 被摧毁
@@ -23,6 +24,19 @@ namespace Level
 		public bool IdDestroyed
 		{
 			get { return destroyed; }
+		}
+
+		public float Speed
+		{
+			get => speed;
+			set
+			{
+				speed = value;
+				foreach (AnimationState state in animation)
+				{
+					state.speed = speed;
+				}
+			}
 		}
 
 		public void Pick()
@@ -59,12 +73,12 @@ namespace Level
 
 		private void Start()
 		{
-			child.transform.Rotate(Vector3.up, Random.Range(0f, 360f), Space.Self) ;
-		}
-
-		private void Update()
-		{
-			child.transform.Rotate(Vector3.up, speed, Space.Self);
+			animation = animation ?? GetComponent<Animation>();
+			animation.Play();
+			foreach (AnimationState state in animation)
+			{
+				state.speed = speed;
+			}
 		}
 
 		private void OnTriggerEnter(Collider other)

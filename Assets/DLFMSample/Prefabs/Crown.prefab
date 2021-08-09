@@ -88,6 +88,7 @@ GameObject:
   - component: {fileID: 7288285657691262511}
   - component: {fileID: 7288285657691395241}
   - component: {fileID: 7288285657691395240}
+  - component: {fileID: 4380464299716667934}
   m_Layer: 0
   m_Name: Crown
   m_TagString: Untagged
@@ -128,7 +129,7 @@ MonoBehaviour:
   time: 5
   limit: {fileID: 0}
   lineRespawnAttributes: []
-  auto: 0
+  auto: 1
 --- !u!65 &7288285657691395240
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -142,3 +143,19 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 100, z: 500}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!111 &4380464299716667934
+Animation:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7288285657691361807}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Animation: {fileID: 7400000, guid: f24e0890de7354c40b0b3f440567ae35, type: 2}
+  m_Animations:
+  - {fileID: 7400000, guid: f24e0890de7354c40b0b3f440567ae35, type: 2}
+  m_WrapMode: 0
+  m_PlayAutomatically: 1
+  m_AnimatePhysics: 0
+  m_CullingType: 0

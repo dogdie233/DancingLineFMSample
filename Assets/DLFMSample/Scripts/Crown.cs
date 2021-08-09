@@ -8,8 +8,7 @@ using DG.Tweening;
 
 namespace Level
 {
-	[System.Serializable]
-	public struct LineRespawnAttributes
+	public class LineRespawnAttributes
 	{
 		public Line line;
 		public Vector3 position;
@@ -31,7 +30,7 @@ namespace Level
 	{
 		public GameObject child;
 		public MeshRenderer crownIcon;
-		public float speed;
+		[SerializeField] private float speed;
 		public float time;
 		public Line limit;
 		public LineRespawnAttributes[] lineRespawnAttributes;
@@ -39,6 +38,20 @@ namespace Level
 		private bool picked = false;
 		private bool used = false;
 		private Tweener tweener;
+		private new Animation animation;
+
+		public float Speed
+		{
+			get => speed;
+			set
+			{
+				speed = value;
+				foreach (AnimationState state in animation)
+				{
+					state.speed = speed;
+				}
+			}
+		}
 
 		public void Pick()
 		{
@@ -90,12 +103,12 @@ namespace Level
 
 		private void Start()
 		{
-			child.transform.Rotate(Vector3.up, UnityEngine.Random.Range(0f, 360f), Space.Self);
-		}
-
-		private void Update()
-		{
-			child.transform.Rotate(Vector3.up, speed, Space.Self);
+			animation = animation ?? GetComponent<Animation>();
+			animation.Play();
+			foreach (AnimationState state in animation)
+			{
+				state.speed = speed;
+			}
 		}
 
 		private void OnTriggerEnter(Collider other)
