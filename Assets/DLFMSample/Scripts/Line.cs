@@ -18,8 +18,8 @@ namespace Level
             public EventBase<DiamondPickedEventArgs> onDiamondPicked = new EventBase<DiamondPickedEventArgs>();
             public EventBase<CrownPickedEventArgs> onCrownPicked = new EventBase<CrownPickedEventArgs>();
             public EventBase<SkinChangeEventArgs> onSkinChange = new EventBase<SkinChangeEventArgs>();
-            public UnityEvent OnExitGround;
-            public UnityEvent OnEnterGround;
+            public UnityEvent onExitGround;
+            public UnityEvent onEnterGround;
         }
 
         public GameObject bodyObject;
@@ -99,12 +99,12 @@ namespace Level
                 if (IsGrounded)
 				{
                     skin.EndFly();
-                    events.OnEnterGround.Invoke();
+                    events.onEnterGround.Invoke();
 				}
 				else
 				{
                     skin.StartFly();
-                    events.OnExitGround.Invoke();
+                    events.onExitGround.Invoke();
 				}
 			}
             skin.Update();
