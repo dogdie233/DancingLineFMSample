@@ -1,8 +1,5 @@
 ﻿using Event;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace Level.Tools
@@ -35,6 +32,8 @@ namespace Level.Tools
         {
             roadParent = roadParent ?? new GameObject("Roads").transform;
             line = GetComponent<Line>();
+            bpm = bpms[bpms.Length - 1].bpm;
+            timevalue = bpms[bpms.Length - 1].timevalue;
             // 完全接管线的转弯函数
             line.events.onTurn.AddListener(e =>
             {
@@ -86,7 +85,7 @@ namespace Level.Tools
         private void CreateRoad()
 		{
             if (lastTurnPosition == null) { return; }
-            Vector3 roadPosition = new Vector3((line.transform.position.x + lastTurnPosition.Value.x) / 2, line.transform.position.y - (roadParent.localScale.y / 2 + line.transform.localScale.y / 2), (line.transform.position.z + lastTurnPosition.Value.z) / 2);
+            Vector3 roadPosition = new Vector3((line.transform.position.x + lastTurnPosition.Value.x) / 2, line.transform.position.y - (roadPrefab.transform.localScale.y / 2 + line.transform.localScale.y / 2), (line.transform.position.z + lastTurnPosition.Value.z) / 2);
             Transform road = Instantiate(roadPrefab, roadPosition, line.transform.rotation, roadParent).transform;
             road.localScale = new Vector3(width, roadPrefab.transform.localScale.y, Vector2.Distance(new Vector2(line.transform.position.x, line.transform.position.z), new Vector2(lastTurnPosition.Value.x, lastTurnPosition.Value.z)) + width);
 		}
