@@ -1,27 +1,27 @@
 ---
-name: Bug report
-about: Create a report to help us improve
-title: "[Bug Report]"
+name: 有bug
+about: 报告一个bug让开发者忙起来
+title: "[bug报告]"
 labels: ''
 assignees: ''
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+**描述这个bug**
+对bug的清晰而简洁的描述
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+**复现**
+如何复现这个bug:
+1. 点这里
+2. 点那里
+3. 点娜里
+4. 就bug了
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+**期望行为**
+你期望会发生甚么，而不是这个bug
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**截图**
+来点截图
 
-**Version**
-The version where this bug occurs.
+**版本**
+哪个版本有这个bug
