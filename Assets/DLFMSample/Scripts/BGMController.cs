@@ -10,34 +10,47 @@ namespace Level
 {
     public class BGMController : MonoBehaviour
     {
+		private static BGMController instance;
 		[SerializeField] private AudioSource source;
 		private Tweener tweener;
 
-		public float Time
+		public static BGMController Instance => instance;
+		public static float Time
 		{
-			get => source.time;
-			set => source.time = value;
+			get => Instance.source.time;
+			set => Instance.source.time = value;
 		}
 
-		public bool IsPlaying
+		public static int TimeSample
 		{
-			get => source.isPlaying;
+			get => Instance.source.timeSamples;
+			set => Instance.source.timeSamples = value;
+		}
+		public static bool IsPlaying
+		{
+			get => Instance.source.isPlaying;
 			set
 			{
-				if (value) { source.Play(); }
-				else { source.Pause(); }
+				if (value) { Instance.source.Play(); }
+				else { Instance.source.Pause(); }
 			}
 		}
 
-		public AudioClip Clip
+		public static AudioClip Clip
 		{
-			get => source.clip;
-			set => source.clip = value;
+			get => Instance.source.clip;
+			set => Instance.source.clip = value;
 		}
 
 		private void Awake()
 		{
-			if (source == null) { source = GetComponent<AudioSource>(); }
+			if (instance == null) { instance = this; }
+			else
+			{
+				enabled = false;
+				return;
+			}
+			source = source ?? GetComponent<AudioSource>();
 			EventManager.onStateChange.AddListener(e =>
 			{
 				if (source == null)

@@ -6,12 +6,12 @@ namespace Level.Skins
 {
 	public class NormalSkin : SkinCreationBase<NormalSkinInfo>
 	{
-		private Vector3 lastTurnPosition;
 		private BoxCollider lineCollider;
 		private MeshRenderer meshRenderer;
 		private Transform body;
 		private Transform bodiesParent;
 		private Transform particlesParent;
+		private Vector3 bodyStartPosition;
 
 		public NormalSkin(Line line)
 		{
@@ -31,8 +31,8 @@ namespace Level.Skins
 			{
 				if (body != null)
 				{
-					body.position = Vector3.Lerp(lastTurnPosition, line.transform.position, 0.5f);
-					body.localScale = new Vector3(body.localScale.x, body.localScale.y, Vector3.Distance(lastTurnPosition, line.transform.position));
+					body.position = Vector3.Lerp(bodyStartPosition, line.transform.position, 0.5f) + line.transform.rotation * Vector3.back * line.transform.localScale.z / 2f;
+					body.localScale = new Vector3(body.localScale.x, body.localScale.y, Vector3.Distance(bodyStartPosition, line.transform.position));
 					body.LookAt(line.transform);
 				}
 			}
@@ -84,12 +84,13 @@ namespace Level.Skins
 
 		public override void StartFly()
 		{
-			if (body != null)  //下落线身与地板对齐
+			/*if (body != null)  //下落线身与地板对齐
 			{
 				body.localScale -= Vector3.forward * lineCollider.size.z;
 				body.Translate(Vector3.back * lineCollider.size.z / 2, Space.Self);
 				body = null;
-			}
+			}*/
+			body = null;
 		}
 
 		public override void Turn(bool foucs)
@@ -114,13 +115,14 @@ namespace Level.Skins
 		private void CreateBody()
 		{
 			if (bodiesParent == null) { bodiesParent = new GameObject("Bodies").transform; }
-			if (body != null && (line.transform.localScale.z / 2) < Vector3.Distance(lastTurnPosition, line.transform.position))
+			if (body != null)
 			{
-				body.localScale += Vector3.forward * line.transform.localScale.z / 2;
-				body.Translate(Vector3.forward * line.transform.localScale.z / 4, Space.Self);
+				body.position = Vector3.Lerp(bodyStartPosition, line.transform.position, 0.5f) + Quaternion.Euler(line.nextWay) * Vector3.back * line.transform.localScale.z / 2f;
+				body.localScale = new Vector3(body.localScale.x, body.localScale.y, Vector3.Distance(bodyStartPosition, line.transform.position));
+				body.LookAt(line.transform);
 			}
-			body = GameObject.Instantiate(skinInfo.bodyPrefab, line.transform.position, line.transform.rotation, bodiesParent).transform;
-			lastTurnPosition = line.transform.position;
+			bodyStartPosition = line.transform.position;
+			body = GameObject.Instantiate(skinInfo.bodyPrefab, bodyStartPosition, line.transform.rotation, bodiesParent).transform;
 		}
 	}
 }

@@ -49,25 +49,31 @@ public class Aff2RoadWindow : EditorWindow
                 bool readingHead = true;
                 foreach (string line in lines)
 				{
+                    Debug.Log(line);
+                    string line1 = line.Trim();
                     if (readingHead == true)
 					{
-                        if (line == "-")
+                        if (line1 == "-")
 						{
                             readingHead = false;
                             Debug.Log($"ReadHeadFinish, audioOffset: {-lastTurnTime}");
                             continue;
 						}
-                        string[] kvp = line.Split(':');
-                        if (kvp[0] == "audioOffset") { lastTurnTime = -int.Parse(kvp[1]); }
+                        string[] kvp = line1.Split(':');
+                        if (kvp[0].ToLower() == "audiooffset") { lastTurnTime = -int.Parse(kvp[1]); }
 					}
 					else
 					{
-                        Match match = Regex.Match(line, "^\\((\\d+),(\\d+)\\);$");
+                        Match match = Regex.Match(line1, "^\\((\\d+),(\\d+)\\);$");
                         if (match.Success &&
                             ((int.Parse(match.Groups[2].Value) == 1 && track1) ||
                             (int.Parse(match.Groups[2].Value) == 2 && track2) ||
                             (int.Parse(match.Groups[2].Value) == 3 && track3) ||
-                            (int.Parse(match.Groups[2].Value) == 4 && track4))) { Turn(int.Parse(match.Groups[1].Value)); }
+                            (int.Parse(match.Groups[2].Value) == 4 && track4)))
+						{
+                            Turn(int.Parse(match.Groups[1].Value));
+                            this.line.turnTime.Add(int.Parse(match.Groups[1].Value) / 1000f);
+                        }
                     }
 				}
             }
@@ -78,10 +84,11 @@ public class Aff2RoadWindow : EditorWindow
 	{
         if (lastTurnPosition == null) { return; }
         if (time <= lastTurnTime) { return; }
-        float roadLength = line.speed * ((time - lastTurnTime) / 1000) + width;
-        Vector3 endPosition = lastTurnPosition + (Quaternion.Euler(nowAngle) * Vector3.forward) * roadLength;
+        float length = line.speed * ((time - lastTurnTime) / 1000f);
+        Vector3 endPosition = lastTurnPosition + (Quaternion.Euler(nowAngle) * Vector3.forward) * length;
+        Debug.DrawLine(lastTurnPosition, endPosition, Color.red, 10f);
         Transform road = Instantiate(roadPrefab, (lastTurnPosition + endPosition) / 2f, Quaternion.Euler(nowAngle), roadParent).transform;
-        road.localScale = new Vector3(width, roadPrefab.transform.localScale.y, roadLength);
+        road.localScale = new Vector3(width, roadPrefab.transform.localScale.y, length + width);
         lastTurnTime = time;
         lastTurnPosition = endPosition;
         nowAngle = nowAngle == line.transform.localEulerAngles ? line.nextWay : line.transform.localEulerAngles;

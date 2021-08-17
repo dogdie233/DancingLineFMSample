@@ -30,7 +30,7 @@ namespace Level
 
     public class GameController : MonoBehaviour
     {
-        [HideInInspector] public static GameController instance = null;
+        private static GameController instance = null;
         public Button bgButton;
         public static List<Line> lines = new List<Line>();
         public AudioMixerGroup soundMixerGroup;
@@ -38,6 +38,10 @@ namespace Level
         private static GameState _state = GameState.SelectingSkins;
         public static List<ICollection> collections = new List<ICollection>();
         public static List<Crown> crowns;
+        private static float startTime;
+
+        public static GameController Instance => instance;
+        public static float StartTime => startTime;
 
         public static GameState State
 		{
@@ -70,28 +74,29 @@ namespace Level
             get => !(_state == GameState.SelectingSkins || _state == GameState.WaitingStart);
         }
 
-		private void Awake()
+        private void Awake()
         {
             if (instance == null && instance != this) { instance = this; }
-			else
-			{
+            else
+            {
                 Debug.LogError("[Error] There is more than one Game Controller");
                 this.enabled = false;
                 return;
             }
             bgButton.onClick.AddListener(() => {
                 switch (_state)
-				{
+                {
                     case GameState.SelectingSkins:
                         State = GameState.WaitingStart;
                         break;
                     case GameState.WaitingStart:
                     case GameState.WaitingContinue:
                         State = GameState.Playing;
+                        startTime = Time.time;
                         break;
-				}
+                }
             });
-		}
+        }
 
 		public static void Respawn(Crown crown)
 		{

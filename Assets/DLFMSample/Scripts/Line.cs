@@ -22,7 +22,6 @@ namespace Level
             public UnityEvent onEnterGround;
         }
 
-        public GameObject bodyObject;
         private new Rigidbody rigidbody;
         public Vector3 nextWay;
         public float speed = 10f;
@@ -38,31 +37,34 @@ namespace Level
         [HideInInspector] public LineRespawnAttributes startAttributes;
         public SkinBase skin;
         private SkinBase[] skins;
+        public List<float> turnTime = new List<float>();
+        public bool auto = false;
+        private int autoIndex = 0;
+        [HideInInspector] public Vector3 previousTurnPosition;
+        private float previousTurnAudioTime;
 
         public bool IsGrounded
-		{
+        {
             get => (touchings.Count != 0 || (rigidbody.velocity.y >= -0.1f && rigidbody.velocity.y <= 0.1f && Physics.gravity.y != 0f)) ? true : false;
         }
 
         public bool Moving
-		{
+        {
             get => moving;
-			set
-			{
-                if (moving == value) { return; }
-                moving = value;
-			}
-		}
+            set => moving = value;
+        }
 
         private void Awake()
-		{
+        {
             rigidbody = GetComponent<Rigidbody>();
             EventManager.onStateChange.AddListener((StateChangeEventArgs e) =>
             {
                 if (e.canceled) { return e; }
-				switch (e.newState)
-				{
+                switch (e.newState)
+                {
                     case GameState.Playing:
+                        previousTurnPosition = transform.position;
+                        previousTurnAudioTime = BGMController.Time;
                         Moving = true;
                         break;
                     case GameState.WaitingRespawn:
@@ -72,13 +74,14 @@ namespace Level
                     case GameState.SelectingSkins:
                         Moving = false;
                         Respawn(startAttributes);
+                        autoIndex = 0;
                         break;
                 }
                 return e;
             }, Priority.Monitor);
         }
 
-		private void Start()
+        private void Start()
         {
             skins = SkinManager.InstantiateSkins(this);  // 实例化皮肤
             ChangeSkin(SkinManager.defaultSkin);
@@ -87,26 +90,37 @@ namespace Level
             startAttributes = new LineRespawnAttributes(this, transform.position, transform.localEulerAngles, nextWay, controllable);
         }
 
-		private void Update()
+        private void Move()
+		{
+            Vector3 targetPos = previousTurnPosition + transform.rotation * Vector3.forward * speed * (Time.time - GameController.StartTime - previousTurnAudioTime);
+            transform.position = new Vector3(targetPos.x, transform.position.y, targetPos.z);
+        }
+
+        private void Update()
         {
+            if (auto && autoIndex < turnTime.Count && turnTime[autoIndex] < BGMController.Time)
+            {
+                Turn(true);
+                autoIndex++;
+            }
             if (Moving)
 			{
-                gameObject.transform.Translate(Vector3.forward * speed * Time.deltaTime, Space.Self);
-            }
+                Move();
+			}
             if (previousFrameIsGrounded != IsGrounded)
-			{
+            {
                 previousFrameIsGrounded = IsGrounded;
                 if (IsGrounded)
-				{
+                {
                     skin.EndFly();
                     events.onEnterGround.Invoke();
-				}
-				else
-				{
+                }
+                else
+                {
                     skin.StartFly();
                     events.onExitGround.Invoke();
-				}
-			}
+                }
+            }
             skin.Update();
         }
 
@@ -115,7 +129,7 @@ namespace Level
         /// </summary>
         /// <param name="focus">是否为强制转弯(即无视controlled, IsGrounded, State)</param>
         public void Turn(bool focus)
-		{
+        {
             if ((IsGrounded && GameController.State == GameState.Playing && controllable && !died) || focus)
             {
                 EventManager.onLineTurn.Invoke(new LineTurnEventArgs(this, transform.localEulerAngles, nextWay, focus), e1 =>
@@ -126,17 +140,20 @@ namespace Level
                         {
                             if (IsGrounded || focus)
                             {
+                                Move();
                                 (transform.localEulerAngles, nextWay) = (nextWay, transform.localEulerAngles);
                                 skin.Turn(focus);
+                                previousTurnPosition = transform.position;
+                                previousTurnAudioTime = Time.time - GameController.StartTime;
                             }
                         }
                     });
                 });
             }
-		}
+        }
 
         public void Respawn(LineRespawnAttributes attributes)
-		{
+        {
             transform.position = attributes.position;
             transform.localEulerAngles = attributes.way;
             nextWay = attributes.nextWay;
@@ -149,31 +166,37 @@ namespace Level
         {
             if (collision.gameObject.CompareTag("Obstacle"))
             {
-                EventManager.onLineDie.Invoke(new LineDieEventArgs(this, DeathCause.Obstacle), e1 =>
-                {
-                    events.onDie.Invoke(e1, (LineDieEventArgs e2) =>
-                    {
-                        if (!e2.canceled)
-                        {
-                            died = true;
-                            switch (e2.cause)
-                            {
-                                case DeathCause.Obstacle:
-                                    Moving = false;
-                                    break;
-                                case DeathCause.Air:
-                                    break;
-                                case DeathCause.Water:
-                                    break;
-                            }
-                            skin.Die(e2.cause);
-                            if (overWhenDie) { GameController.GameOver(true); }
-                        }
-                    });
-                });
+                Die(DeathCause.Obstacle);
             }
-            if (collision.contacts[0].normal.y < 1f - slopeRange || collision.contacts[0].normal.y > 1f + slopeRange) { return; }  // 最大允许控制坡度
+            Vector3 contact0Normal = collision.GetContact(0).normal;
+            if (contact0Normal.y < 1f - slopeRange || contact0Normal.y > 1f + slopeRange) { return; }  // 最大允许控制坡度
             touchings.Add(collision.gameObject);
+        }
+
+        public void Die(DeathCause cause)
+		{
+            EventManager.onLineDie.Invoke(new LineDieEventArgs(this, cause), e1 =>
+            {
+                events.onDie.Invoke(e1, (LineDieEventArgs e2) =>
+                {
+                    if (!e2.canceled)
+                    {
+                        died = true;
+                        switch (e2.cause)
+                        {
+                            case DeathCause.Obstacle:
+                                Moving = false;
+                                break;
+                            case DeathCause.Air:
+                                break;
+                            case DeathCause.Water:
+                                break;
+                        }
+                        skin.Die(e2.cause);
+                        if (overWhenDie) { GameController.GameOver(true); }
+                    }
+                });
+            });
         }
 
         private void OnCollisionExit(Collision collision) => touchings.Remove(collision.gameObject);

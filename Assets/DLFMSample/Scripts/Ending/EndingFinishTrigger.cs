@@ -13,6 +13,9 @@ namespace Level.Ending
             ending = ending ?? transform.parent.gameObject.GetComponent<EndingPyramid>();
 		}
 
-        private void OnTriggerEnter() => ending.OnFinishTriggerEnter();
+        private void OnTriggerEnter(Collider other)
+        {
+            if (other.CompareTag("Player")) { ending.OnFinishTriggerEnter(); }
+        }
     }
 }

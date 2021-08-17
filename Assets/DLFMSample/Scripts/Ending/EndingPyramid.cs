@@ -42,6 +42,7 @@ namespace Level.Ending
 			// 开门动画
 			leftTweener = left.DOLocalMoveX(-scale, time).SetEase(curve);
 			rightTweener = right.DOLocalMoveX(scale, time).SetEase(curve);
+			Debug.Log(GameController.lines[0].name);
 			foreach (Line line in GameController.lines)
 			{
 				line.controllable = false;

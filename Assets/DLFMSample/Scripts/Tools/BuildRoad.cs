@@ -1,5 +1,6 @@
 ﻿using Event;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Level.Tools
@@ -32,6 +33,7 @@ namespace Level.Tools
         {
             roadParent = roadParent ?? new GameObject("Roads").transform;
             line = GetComponent<Line>();
+            line.turnTime.Clear();
             bpm = bpms[bpms.Length - 1].bpm;
             timevalue = bpms[bpms.Length - 1].timevalue;
             // 完全接管线的转弯函数
@@ -63,10 +65,12 @@ namespace Level.Tools
                         (line.transform.localEulerAngles, line.nextWay) = (line.nextWay, line.transform.localEulerAngles);  // 转弯
                         line.skin.Turn(true);  // 皮肤转弯
                         line.transform.Translate(Vector3.forward * (line.speed * interval), Space.Self);  // 往前走
+                        line.turnTime.Add(audio.time - interval);
                     }
                     else  // 点快了
                     {
                         turnFuture = ((int)(audio.time / Interval) + 1) * Interval;
+                        line.turnTime.Add(audio.time - interval);
                         Debug.Log($"点快了, turnFuture: {turnFuture}");
                     }
 				}
@@ -74,12 +78,12 @@ namespace Level.Tools
                 return e;
             }, Priority.Low);
 
-            /*for (int i = 0; i < 1000; i++)
+            for (int i = 0; i < 1000; i++)
 			{
                 float time = Interval * i;
-                Debug.DrawLine(new Vector3(time * line.speed, 0f, 1000f), new Vector3(time * line.speed, 0f, -1000f), Color.red, 10000f);
-                Debug.DrawLine(new Vector3(1000f, 0f, time * line.speed), new Vector3(-1000f, 0f, time * line.speed), Color.red, 10000f);
-            }*/
+                Debug.DrawLine(new Vector3(-time * line.speed, -0.5f, 1000f) + line.transform.position, new Vector3(-time * line.speed, -0.5f, -1000f) + line.transform.position, Color.red, 10000f);
+                Debug.DrawLine(new Vector3(1000f, -0.5f, time * line.speed) + line.transform.position, new Vector3(-1000f, -0.5f, time * line.speed) + line.transform.position, Color.red, 10000f);
+            }
         }
 
         private void CreateRoad()

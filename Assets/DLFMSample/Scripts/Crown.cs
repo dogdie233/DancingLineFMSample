@@ -5,9 +5,11 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using DG.Tweening;
+using System.Linq;
 
 namespace Level
 {
+	[Serializable]
 	public class LineRespawnAttributes
 	{
 		public Line line;
@@ -24,6 +26,29 @@ namespace Level
 			this.nextWay = nextWay;
 			this.controllable = controllable;
 		}
+
+		public LineRespawnAttributes() { }
+	}
+
+	[Serializable]
+	public class CameraFollowerRespawnAttributes
+	{
+		public CameraFollower follower;
+		public bool enabled;
+		public Vector2 rotation;
+		public float distance;
+		public Vector3 pivot;
+
+		public CameraFollowerRespawnAttributes(CameraFollower follower, bool enabled, Vector2 rotation, float distance, Vector3 pivot)
+		{
+			this.follower = follower;
+			this.enabled = enabled;
+			this.rotation = rotation;
+			this.distance = distance;
+			this.pivot = pivot;
+		}
+
+		public CameraFollowerRespawnAttributes() { }
 	}
 
 	public class Crown : MonoBehaviour, ICollection
@@ -34,6 +59,7 @@ namespace Level
 		public float time;
 		public Line limit;
 		public LineRespawnAttributes[] lineRespawnAttributes;
+		public CameraFollowerRespawnAttributes[] cameraFollowerRespawnAttributes;
 		public bool auto;
 		private bool picked = false;
 		private bool used = false;
@@ -61,15 +87,22 @@ namespace Level
 			tweener?.Kill();
 			if (auto)
 			{
+				time = BGMController.Time;
 				lineRespawnAttributes = new LineRespawnAttributes[GameController.lines.Count];
 				for (int i = 0; i < GameController.lines.Count; i++)
 				{
+					lineRespawnAttributes[i] = new LineRespawnAttributes();
 					lineRespawnAttributes[i].line = GameController.lines[i];
 					lineRespawnAttributes[i].position = GameController.lines[i].transform.position;
 					lineRespawnAttributes[i].way = GameController.lines[i].transform.localEulerAngles;
 					lineRespawnAttributes[i].nextWay = GameController.lines[i].nextWay;
 					lineRespawnAttributes[i].controllable = GameController.lines[i].controllable;
 				}
+				cameraFollowerRespawnAttributes = Camera.allCameras
+					.Select(c => (c, c.GetComponent<CameraFollower>()))
+					.Where(az => az.Item2 != null)
+					.Select(az => new CameraFollowerRespawnAttributes(az.Item2, az.Item2.enabled, az.Item2.arm.localEulerAngles, Mathf.Abs(az.c.transform.localPosition.z), az.Item2.pivotOffset))
+					.ToArray();
 			}
 			foreach (Line line in GameController.lines)
 			{
