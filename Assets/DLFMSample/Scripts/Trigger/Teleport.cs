@@ -15,7 +15,7 @@ namespace Level.Triggers
 			if (other.CompareTag("Player") && (limit == null || other.GetComponent<Line>() == limit))
 			{
 				Line line = other.GetComponent<Line>();
-				other.transform.position += offset;
+				line.GoOffset(offset);
 				if (cameraFollower != null)
 				{
 					cameraFollower.followPoint += offset;

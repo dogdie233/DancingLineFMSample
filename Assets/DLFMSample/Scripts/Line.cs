@@ -40,7 +40,7 @@ namespace Level
         public List<float> turnTime = new List<float>();
         public bool auto = false;
         private int autoIndex = 0;
-        [HideInInspector] public Vector3 previousTurnPosition;
+        private Vector3 previousTurnPosition;
         private float previousTurnAudioTime;
 
         public bool IsGrounded
@@ -90,10 +90,17 @@ namespace Level
             startAttributes = new LineRespawnAttributes(this, transform.position, transform.localEulerAngles, nextWay, controllable);
         }
 
-        private void Move()
+        public void Move()
 		{
             Vector3 targetPos = previousTurnPosition + transform.rotation * Vector3.forward * speed * (Time.time - GameController.StartTime - previousTurnAudioTime);
             transform.position = new Vector3(targetPos.x, transform.position.y, targetPos.z);
+        }
+
+        public void GoOffset(Vector3 offset)
+		{
+            transform.position = transform.position + offset;
+            previousTurnPosition = transform.position + offset;
+            previousTurnAudioTime = Time.time - GameController.StartTime;
         }
 
         private void Update()
