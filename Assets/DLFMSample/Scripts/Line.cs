@@ -90,7 +90,7 @@ namespace Level
             startAttributes = new LineRespawnAttributes(this, transform.position, transform.localEulerAngles, nextWay, controllable);
         }
 
-        public void Move()
+        private void Move()
 		{
             Vector3 targetPos = previousTurnPosition + transform.rotation * Vector3.forward * speed * (Time.time - GameController.StartTime - previousTurnAudioTime);
             transform.position = new Vector3(targetPos.x, transform.position.y, targetPos.z);
@@ -98,9 +98,8 @@ namespace Level
 
         public void GoOffset(Vector3 offset)
 		{
-            transform.position = transform.position + offset;
-            previousTurnPosition = transform.position + offset;
-            previousTurnAudioTime = Time.time - GameController.StartTime;
+            transform.position += offset;
+            previousTurnPosition += offset;
         }
 
         private void Update()
