@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Level.Trigger
+namespace Level.Triggers
 {
 	public class AirObstacle : MonoBehaviour
 	{

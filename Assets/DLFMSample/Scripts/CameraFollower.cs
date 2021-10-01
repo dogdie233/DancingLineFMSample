@@ -34,7 +34,7 @@ namespace Level
             followPoint = line.transform.position;
             pivotOffset = initPivotOffset;
             arm.transform.position = followPoint + pivotOffset;
-            EventManager.onStateChange.AddListener(e =>
+            EventManager.OnStateChange.AddListener(e =>
             {
                 if (e.canceled) { return e; }
                 switch (e.newState)
@@ -48,7 +48,7 @@ namespace Level
                         smoothTime = startSmoothTime;
                         arm.localRotation = startArmRotation;
                         transform.localPosition = new Vector3(0f, 0f, startDistance);
-                        followPoint = line.startAttributes.position;
+                        followPoint = line.StartAttributes.position;
                         pivotOffset = initPivotOffset;
                         arm.transform.position = followPoint + pivotOffset;
                         currentVelocity = Vector3.zero;
@@ -56,9 +56,9 @@ namespace Level
                 }
                 return e;
             }, Priority.Monitor);
-            EventManager.onRespawn.AddListener(e =>
+            EventManager.OnRespawn.AddListener(e =>
             {
-                foreach (CameraFollowerRespawnAttributes attributes in e.crown.cameraFollowerRespawnAttributes)
+                foreach (CameraFollowerRespawnAttributes attributes in e.crown.CameraFollowerRespawnAttributes)
                 {
                     if (attributes.follower == this)
                     {
@@ -76,7 +76,7 @@ namespace Level
             }, Priority.Monitor);
         }
 
-        void Update()
+        private void Update()
         {
             if (GameController.State == GameState.Playing)
 			{

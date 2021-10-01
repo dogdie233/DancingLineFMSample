@@ -1,5 +1,4 @@
 ﻿using Level;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEditor;
@@ -19,6 +18,7 @@ public class Aff2RoadWindow : EditorWindow
     private int lastTurnTime = 0;
     private Vector3 lastTurnPosition = Vector3.zero;
     private Vector3 nowAngle = Vector3.zero;
+    private float audioOffset = 0f;
 
     [MenuItem("DLFMSample/Chart2Road/Aff")]//在unity菜单Window下有MyWindow选项
     private static void Init()
@@ -45,6 +45,7 @@ public class Aff2RoadWindow : EditorWindow
                 nowAngle = line.transform.localEulerAngles;
                 lastTurnPosition = line.transform.position - Vector3.up * (roadPrefab.transform.localScale.y / 2 + line.transform.localScale.y / 2);
                 lastTurnTime = 0;
+                line.turnTime = new List<float>();
                 string[] lines = affTextAsset.text.Split('\n');
                 bool readingHead = true;
                 foreach (string line in lines)
@@ -60,7 +61,11 @@ public class Aff2RoadWindow : EditorWindow
                             continue;
 						}
                         string[] kvp = line1.Split(':');
-                        if (kvp[0].ToLower() == "audiooffset") { lastTurnTime = -int.Parse(kvp[1]); }
+                        if (kvp[0].ToLower() == "audiooffset")
+						{
+                            audioOffset = (float)int.Parse(kvp[1]) / 1000f;
+                            lastTurnTime = -int.Parse(kvp[1]);
+                        }
 					}
 					else
 					{
@@ -72,7 +77,7 @@ public class Aff2RoadWindow : EditorWindow
                             (int.Parse(match.Groups[2].Value) == 4 && track4)))
 						{
                             Turn(int.Parse(match.Groups[1].Value));
-                            this.line.turnTime.Add(int.Parse(match.Groups[1].Value) / 1000f);
+                            this.line.turnTime.Add(int.Parse(match.Groups[1].Value) / 1000f + audioOffset);
                         }
                     }
 				}
@@ -84,13 +89,13 @@ public class Aff2RoadWindow : EditorWindow
 	{
         if (lastTurnPosition == null) { return; }
         if (time <= lastTurnTime) { return; }
-        float length = line.speed * ((time - lastTurnTime) / 1000f);
+        float length = line.Speed * ((time - lastTurnTime) / 1000f);
         Vector3 endPosition = lastTurnPosition + (Quaternion.Euler(nowAngle) * Vector3.forward) * length;
         Debug.DrawLine(lastTurnPosition, endPosition, Color.red, 10f);
         Transform road = Instantiate(roadPrefab, (lastTurnPosition + endPosition) / 2f, Quaternion.Euler(nowAngle), roadParent).transform;
         road.localScale = new Vector3(width, roadPrefab.transform.localScale.y, length + width);
         lastTurnTime = time;
         lastTurnPosition = endPosition;
-        nowAngle = nowAngle == line.transform.localEulerAngles ? line.nextWay : line.transform.localEulerAngles;
+        nowAngle = nowAngle == line.transform.localEulerAngles ? line.NextWay : line.transform.localEulerAngles;
     }
 }

@@ -13,10 +13,10 @@ namespace Event
 		High,
 		Normal,
 		Low,
-		Monitor,
+		Monitor
 	}
 
-	public class HandlerAttributes<T>
+	public struct HandlerAttributes<T> : IEquatable<HandlerAttributes<T>>
 	{
 		public Func<T, T> action;
 		public Priority priority;
@@ -25,6 +25,25 @@ namespace Event
 		{
 			this.action = action;
 			this.priority = priority;
+		}
+
+		public static bool operator ==(HandlerAttributes<T> lhs, HandlerAttributes<T> rhs) => lhs.Equals(rhs);
+		public static bool operator !=(HandlerAttributes<T> lhs, HandlerAttributes<T> rhs) => !lhs.Equals(rhs);
+
+		public bool Equals(HandlerAttributes<T> other) => action == other.action && priority == other.priority;
+
+		public override bool Equals(object obj)
+		{
+			if (!(obj is HandlerAttributes<T>)) { return false; }
+			return Equals((HandlerAttributes<T>)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			int hash = 17;
+			hash = 31 * hash + action.GetHashCode();
+			hash = 31 * hash + priority.GetHashCode();
+			return hash;
 		}
 	}
 
@@ -66,26 +85,13 @@ namespace Event
 			lockSlim.ExitWriteLock();
 		}
 
-		public bool RemoveListener(Func<T, T> action)
+		public bool RemoveListener(Func<T, T> action, Priority priority)
 		{
-			LinkedListNode<HandlerAttributes<T>> node = handlers.First;
-			lockSlim.EnterUpgradeableReadLock();
-			while (true)
-			{
-				if (node.Value.action == action)
-				{
-					lockSlim.EnterWriteLock();
-					handlers.Remove(node);
-					lockSlim.ExitWriteLock();
-					return true;
-				}
-				if (node.Next == null)
-				{
-					lockSlim.ExitUpgradeableReadLock();
-					return false;
-				}
-				node = node.Next;
-			}
+			HandlerAttributes<T> handler = new HandlerAttributes<T>(action, priority);
+			lockSlim.EnterWriteLock();
+			bool succeed = handlers.Remove(handler);
+			lockSlim.ExitWriteLock();
+			return succeed;
 		}
 
 		public void Invoke(T arg, Action<T> callback = null)
@@ -121,12 +127,12 @@ namespace Event
 
 	public static class EventManager
 	{
-		public static EventBase<StateChangeEventArgs> onStateChange = new EventBase<StateChangeEventArgs>();
-		public static EventBase<DiamondPickedEventArgs> onDiamondPicked = new EventBase<DiamondPickedEventArgs>();
-		public static EventBase<CrownPickedEventArgs> onCrownPicked = new EventBase<CrownPickedEventArgs>();
-		public static EventBase<RespawnEventArgs> onRespawn = new EventBase<RespawnEventArgs>();
-		public static EventBase<LineTurnEventArgs> onLineTurn = new EventBase<LineTurnEventArgs>();
-		public static EventBase<LineDieEventArgs> onLineDie = new EventBase<LineDieEventArgs>();
-		public static EventBase<SkinChangeEventArgs> onSkinChange = new EventBase<SkinChangeEventArgs>();
+		public static EventBase<StateChangeEventArgs> OnStateChange { get; } = new EventBase<StateChangeEventArgs>();
+		public static EventBase<DiamondPickedEventArgs> OnDiamondPicked { get; } = new EventBase<DiamondPickedEventArgs>();
+		public static EventBase<CrownPickedEventArgs> OnCrownPicked { get; } = new EventBase<CrownPickedEventArgs>();
+		public static EventBase<RespawnEventArgs> OnRespawn { get; } = new EventBase<RespawnEventArgs>();
+		public static EventBase<LineTurnEventArgs> OnLineTurn { get; } = new EventBase<LineTurnEventArgs>();
+		public static EventBase<LineDieEventArgs> OnLineDie { get; } = new EventBase<LineDieEventArgs>();
+		public static EventBase<SkinChangeEventArgs> OnSkinChange { get; } = new EventBase<SkinChangeEventArgs>();
 	}
 }

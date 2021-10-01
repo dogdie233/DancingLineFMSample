@@ -18,7 +18,7 @@ namespace Level.Ending
 
 		private void Start()
 		{
-			EventManager.onStateChange.AddListener(args =>
+			EventManager.OnStateChange.AddListener(args =>
 			{
 				switch (args.newState)
 				{
@@ -45,7 +45,7 @@ namespace Level.Ending
 			Debug.Log(GameController.lines[0].name);
 			foreach (Line line in GameController.lines)
 			{
-				line.controllable = false;
+				line.Controllable = false;
 			}
 		}
 

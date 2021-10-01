@@ -1,6 +1,4 @@
 ﻿using Event;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
 
@@ -12,13 +10,14 @@ namespace Level.Animations
 
         void Start()
         {
-            EventManager.onStateChange.AddListener(args =>
+            EventManager.OnStateChange.AddListener(args =>
             {
                 switch (args.newState)
                 {
                     case GameState.SelectingSkins:
                         timeline.time = 0f;
                         timeline.Stop();
+                        timeline.Evaluate();
                         break;
                     case GameState.Playing:
                         timeline.Play();
@@ -30,9 +29,10 @@ namespace Level.Animations
                 }
                 return args;
             }, Priority.Monitor);
-            EventManager.onRespawn.AddListener(args =>
+            EventManager.OnRespawn.AddListener(args =>
             {
-                timeline.time = args.crown.time;
+                timeline.time = args.crown.Time;
+                timeline.Evaluate();
                 return args;
             }, Priority.Monitor);
         }

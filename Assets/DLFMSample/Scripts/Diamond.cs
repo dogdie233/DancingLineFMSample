@@ -9,23 +9,22 @@ namespace Level
 	{
 		public GameObject child;
 		[SerializeField] private float speed;
-		public Line limit;
-		public ParticlesGroup[] particles;
+		[SerializeField] private Line limit;
+		[SerializeField] private ParticlesGroup[] particles;
 		public new Animation animation;
 		private static Transform particlesParent;
 		private bool picked = false;  // 被线吃
 		private bool destroyed = false;  // 被摧毁
 
+		public Line Limit { get => limit; set => limit = value; }
 		public bool IsPicked
 		{
 			get { return picked; }
 		}
-
 		public bool IdDestroyed
 		{
 			get { return destroyed; }
 		}
-
 		public float Speed
 		{
 			get => speed;
@@ -42,11 +41,13 @@ namespace Level
 		public void Pick()
 		{
 			if (picked || destroyed) { return; }  //被吃了
+			picked = true;
+			destroyed = false;
 			GameController.collections.Add(this);
 			child.SetActive(false);
 			foreach (Line line in GameController.lines)
 			{
-				line.skin.PickDiamond(this, line);
+				line.Skin.PickDiamond(this, line);
 			}
 			//粒子效果
 			if (particles.Length == 0) { return; }
@@ -88,9 +89,9 @@ namespace Level
 			{
 				Line line = other.GetComponent<Line>();
 				if (limit != null && line != limit) { return; }
-				EventManager.onDiamondPicked.Invoke(new DiamondPickedEventArgs(line, this, true), (DiamondPickedEventArgs e1) =>
+				EventManager.OnDiamondPicked.Invoke(new DiamondPickedEventArgs(line, this, true), (DiamondPickedEventArgs e1) =>
 				{
-					line.events.onDiamondPicked.Invoke(e1, (DiamondPickedEventArgs e2) =>
+					line.Events.OnDiamondPicked.Invoke(e1, (DiamondPickedEventArgs e2) =>
 					{
 						if (!e1.canceled && !e2.canceled) { Pick(); }
 					});

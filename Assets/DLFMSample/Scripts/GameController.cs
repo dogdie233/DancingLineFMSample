@@ -31,10 +31,8 @@ namespace Level
     public class GameController : MonoBehaviour
     {
         private static GameController instance = null;
-        public Button bgButton;
         public static List<Line> lines = new List<Line>();
         public AudioMixerGroup soundMixerGroup;
-        public BGMController bgmController;
         private static GameState _state = GameState.SelectingSkins;
         public static List<ICollection> collections = new List<ICollection>();
         public static List<Crown> crowns;
@@ -50,19 +48,30 @@ namespace Level
             {
                 if (_state != value)
                 {
-                    EventManager.onStateChange.Invoke(new StateChangeEventArgs(_state, value), (StateChangeEventArgs e) =>
+                    EventManager.OnStateChange.Invoke(new StateChangeEventArgs(_state, value), (StateChangeEventArgs e) =>
                     {
                         if (!e.canceled)
                         {
                             _state = e.newState;
-                            if (e.newState == GameState.SelectingSkins)  // 清空Collections
+                            switch(e.newState)
                             {
-                                for (int i = collections.Count - 1; i >= 0f; i--)
-                                {
-                                    collections[i].Recover();
-                                }
-                                collections.Clear();
+                                case GameState.Playing:
+                                    startTime = Time.time;
+                                    break;
+                                case GameState.SelectingSkins:
+                                case GameState.WaitingContinue:
+                                    for (int i = collections.Count - 1; i >= 0f; i--)
+                                    {
+                                        collections[i].Recover();
+                                    }
+                                    collections.Clear();
+                                    break;
                             }
+                            BGMController.Instance.OnStateChange(_state);
+                            foreach (Line line in lines)
+							{
+                                line.OnStateChange(_state);
+							}
                         }
                     });
                 }
@@ -83,32 +92,42 @@ namespace Level
                 this.enabled = false;
                 return;
             }
-            bgButton.onClick.AddListener(() => {
-                switch (_state)
-                {
-                    case GameState.SelectingSkins:
-                        State = GameState.WaitingStart;
-                        break;
-                    case GameState.WaitingStart:
-                    case GameState.WaitingContinue:
-                        State = GameState.Playing;
-                        startTime = Time.time;
-                        break;
-                }
-            });
         }
+
+        private void OnBackgroundButtonClick()
+		{
+            if (State == GameState.Playing)
+			{
+                foreach (Line line in lines) { line.Turn(false); }
+            }
+            switch (_state)
+            {
+                case GameState.SelectingSkins:
+                    State = GameState.WaitingStart;
+                    break;
+                case GameState.WaitingStart:
+                case GameState.WaitingContinue:
+                    State = GameState.Playing;
+                    break;
+            }
+        }
+
+		private void Update()
+		{
+			if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space)) { OnBackgroundButtonClick(); }
+		}
 
 		public static void Respawn(Crown crown)
 		{
-            EventManager.onRespawn.Invoke(new RespawnEventArgs(crown), e1 =>
+            EventManager.OnRespawn.Invoke(new RespawnEventArgs(crown), e1 =>
             {
                 if (e1.canceled) { return; }
-                EventManager.onStateChange.Invoke(new StateChangeEventArgs(_state, GameState.WaitingContinue), (StateChangeEventArgs e2) =>
+                EventManager.OnStateChange.Invoke(new StateChangeEventArgs(_state, GameState.WaitingContinue), (StateChangeEventArgs e2) =>
                 {
                     if (!e2.canceled)
                     {
                         _state = GameState.WaitingContinue;
-                        foreach (LineRespawnAttributes attribute in crown.lineRespawnAttributes)
+                        foreach (LineRespawnAttributes attribute in crown.LineRespawnAttributes)
                         {
                             attribute.line.Respawn(attribute);
                         }
@@ -119,6 +138,7 @@ namespace Level
                             collections.RemoveAt(i);
                         }
                         crown.Respawn();
+                        BGMController.Instance.OnRespawn(crown.Time);
                     }
                 });
             });
@@ -143,7 +163,7 @@ namespace Level
         public static void PlaySound(AudioClip clip)
 		{
             GameObject dieSoundObj = new GameObject("SoundPlayer");
-            dieSoundObj.transform.position = Camera.main.transform.position;
+            dieSoundObj.transform.position = Camera.current.transform.position;
             AudioSource audioSource = dieSoundObj.AddComponent<AudioSource>();
             audioSource.playOnAwake = false;
             audioSource.clip = clip;

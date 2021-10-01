@@ -5,12 +5,13 @@
         [NoScaleOffset] _OutTex ("OutTexture", 2D) = "white" {}
         [NoScaleOffset] _InTex ("InTexture", 2D) = "white" {}
         _Fade ("Fade", Range(0 , 1)) = 0
+        _Color ("FadeColor", Color) = (1, 1, 1, 1)
+        _OutColor ("OutColor", Color) = (0, 0, 0, 1)
     }
     SubShader
     {
-        Tags { "QUEUE" = "Transparent" "IGNOREPROJECTOR" = "true" "RenderType" = "Transparent" }
+        Tags { "QUEUE" = "Transparent" "RenderType" = "Transparent" }
         Blend SrcAlpha OneMinusSrcAlpha
-        ZWrite Off
         LOD 100
 
         Pass
@@ -41,21 +42,23 @@
             float4 _OutTex_ST;
             float4 _InTex_ST;
             float _Fade;
+            fixed4 _Color;
+            fixed4 _OutColor;
 
-            v2f vert (appdata v)
+            v2f vert(appdata v)
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _OutTex);
-                UNITY_TRANSFER_FOG(o,o.vertex);
+                UNITY_TRANSFER_FOG(o, o.vertex);
                 return o;
             }
 
             fixed4 frag (v2f i) : SV_Target
             {
-                // sample the texture
-                fixed4 col = tex2D(_OutTex, i.uv) * ( 1 -_Fade) + tex2D(_InTex, i.uv) * _Fade;
-                // apply fog
+                fixed4 inCol = tex2D(_InTex, i.uv);
+                fixed4 outCol = tex2D(_OutTex, i.uv);
+                fixed4 col = sqrt(inCol * _Color * inCol.w) * _Fade + sqrt(outCol * _OutColor * outCol.w);
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 return col;
             }

@@ -117,7 +117,7 @@ namespace Level.Skins
 			if (bodiesParent == null) { bodiesParent = new GameObject("Bodies").transform; }
 			if (body != null)
 			{
-				body.position = Vector3.Lerp(bodyStartPosition, line.transform.position, 0.5f) + Quaternion.Euler(line.nextWay) * Vector3.back * line.transform.localScale.z / 2f;
+				body.position = Vector3.Lerp(bodyStartPosition, line.transform.position, 0.5f) + Quaternion.Euler(line.NextWay) * Vector3.back * line.transform.localScale.z / 2f;
 				body.localScale = new Vector3(body.localScale.x, body.localScale.y, Vector3.Distance(bodyStartPosition, line.transform.position));
 				body.LookAt(line.transform);
 			}

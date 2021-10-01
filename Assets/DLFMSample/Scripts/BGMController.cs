@@ -51,62 +51,41 @@ namespace Level
 				return;
 			}
 			source = source ?? GetComponent<AudioSource>();
-			EventManager.onStateChange.AddListener(e =>
+			if (source == null)
 			{
-				if (source == null)
-				{
-					Debug.LogError("[BGM Controller] AudioSource Not Found!!!");
-					e.canceled = true;
-				}
-				return e;
-			}, Priority.Low);  // source为空，阻止启动游戏
-			EventManager.onStateChange.AddListener(e =>
+				Debug.LogError("[BGM Controller] AudioSource Not Found!!!");
+			}
+		}
+
+		public void OnStateChange(GameState newState)
+		{
+			switch (newState)
 			{
-				if (!e.canceled)
-				{
-					switch (e.newState)
-					{
-						case GameState.Playing:
-							source.Play();
-							break;
-						case GameState.WaitingRespawn:
-						case GameState.GameOver:
-							tweener?.Kill();
-							tweener = source.DOFade(0f, 3f);
-							break;
-						case GameState.SelectingSkins:
-							tweener?.Kill();
-							source.Stop();
-							source.volume = 1f;
-							break;
-					}
-				}
-				return e;
-			}, Priority.Monitor);
-			EventManager.onRespawn.AddListener(e =>
-			{
-				if (e.canceled) { return e; }
-				tweener?.Kill();
-				source.Play();
-				source.volume = 1f;
-				source.time = e.crown.time;
-				source.Pause();
-				return e;
-			}, Priority.Monitor);
+				case GameState.Playing:
+					source.Play();
+					break;
+				case GameState.WaitingRespawn:
+				case GameState.GameOver:
+					tweener?.Kill();
+					tweener = source.DOFade(0f, 3f);
+					break;
+				case GameState.SelectingSkins:
+					tweener?.Kill();
+					source.Stop();
+					source.volume = 1f;
+					break;
+			}
+		}
+
+		public void OnRespawn(float time)
+		{
+			tweener?.Kill();
+			source.Play();
+			source.volume = 1f;
+			source.time = time;
+			source.Pause();
 		}
 
 		public void Stop() => source.Stop();
-/*
-		private void Update()
-		{
-			if (GameController.State == GameState.Playing)
-			{
-				if (!source.isPlaying && source.time == 0f)
-				{
-					GameController.State = GameState.GameOver;
-					ToDogdie.Utils.AnimationClipMaker.Save("Assets/az/qwq.anim");
-				}
-			}
-		}*/
 	}
 }

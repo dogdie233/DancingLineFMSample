@@ -56,11 +56,11 @@ namespace Level
 		public GameObject child;
 		public MeshRenderer crownIcon;
 		[SerializeField] private float speed;
-		public float time;
-		public Line limit;
-		public LineRespawnAttributes[] lineRespawnAttributes;
-		public CameraFollowerRespawnAttributes[] cameraFollowerRespawnAttributes;
-		public bool auto;
+		[SerializeField] private float time;
+		[SerializeField] private Line limit;
+		[SerializeField] private LineRespawnAttributes[] lineRespawnAttributes;
+		[SerializeField] private CameraFollowerRespawnAttributes[] cameraFollowerRespawnAttributes;
+		[SerializeField] private bool auto;
 		private bool picked = false;
 		private bool used = false;
 		private Tweener tweener;
@@ -78,6 +78,14 @@ namespace Level
 				}
 			}
 		}
+		public float Time { get => time; set => time = value; }
+		public Line Limit { get => limit; set => limit = value; }
+		public bool IsPicked { get => picked; set => picked = value; }
+		public bool IsUsed { get => used; set => used = value; }
+		public bool IsAuto { get => auto; set => auto = value; }
+		public LineRespawnAttributes[] LineRespawnAttributes { get => lineRespawnAttributes; set => lineRespawnAttributes = value; }
+		public CameraFollowerRespawnAttributes[] CameraFollowerRespawnAttributes { get => cameraFollowerRespawnAttributes; set => cameraFollowerRespawnAttributes = value; }
+
 
 		public void Pick()
 		{
@@ -95,8 +103,8 @@ namespace Level
 					lineRespawnAttributes[i].line = GameController.lines[i];
 					lineRespawnAttributes[i].position = GameController.lines[i].transform.position;
 					lineRespawnAttributes[i].way = GameController.lines[i].transform.localEulerAngles;
-					lineRespawnAttributes[i].nextWay = GameController.lines[i].nextWay;
-					lineRespawnAttributes[i].controllable = GameController.lines[i].controllable;
+					lineRespawnAttributes[i].nextWay = GameController.lines[i].NextWay;
+					lineRespawnAttributes[i].controllable = GameController.lines[i].Controllable;
 				}
 				cameraFollowerRespawnAttributes = Camera.allCameras
 					.Select(c => (c, c.GetComponent<CameraFollower>()))
@@ -106,7 +114,7 @@ namespace Level
 			}
 			foreach (Line line in GameController.lines)
 			{
-				line.skin.PickCrown(this, line);
+				line.Skin.PickCrown(this, line);
 			}
 			tweener = crownIcon.material.DOFloat(1f, "_Fade", 1f);
 		}
@@ -151,9 +159,9 @@ namespace Level
 			{
 				Line line = other.GetComponent<Line>();
 				if (limit != null && line != limit) { return; }
-				EventManager.onCrownPicked.Invoke(new CrownPickedEventArgs(line, this), (CrownPickedEventArgs e1) =>
+				EventManager.OnCrownPicked.Invoke(new CrownPickedEventArgs(line, this), (CrownPickedEventArgs e1) =>
 				{
-					line.events.onCrownPicked.Invoke(e1, (CrownPickedEventArgs e2) =>
+					line.Events.OnCrownPicked.Invoke(e1, (CrownPickedEventArgs e2) =>
 					{
 						if (!e1.canceled && !e2.canceled) { Pick(); }
 					});
