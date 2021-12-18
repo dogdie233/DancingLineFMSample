@@ -34,9 +34,9 @@ namespace Level
             followPoint = line.transform.position;
             pivotOffset = initPivotOffset;
             arm.transform.position = followPoint + pivotOffset;
-            EventManager.OnStateChange.AddListener(e =>
+            GameController.OnStateChange.AddListener(e =>
             {
-                if (e.canceled) { return e; }
+                if (e.canceled) { return; }
                 switch (e.newState)
                 {
                     case GameState.WaitingRespawn:
@@ -54,9 +54,8 @@ namespace Level
                         currentVelocity = Vector3.zero;
                         break;
                 }
-                return e;
             }, Priority.Monitor);
-            EventManager.OnRespawn.AddListener(e =>
+            GameController.OnRespawn.AddListener(e =>
             {
                 foreach (CameraFollowerRespawnAttributes attributes in e.crown.CameraFollowerRespawnAttributes)
                 {
@@ -72,7 +71,6 @@ namespace Level
                         break;
                     }
                 }
-                return e;
             }, Priority.Monitor);
         }
 

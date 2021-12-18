@@ -159,11 +159,11 @@ namespace Level
 			{
 				Line line = other.GetComponent<Line>();
 				if (limit != null && line != limit) { return; }
-				EventManager.OnCrownPicked.Invoke(new CrownPickedEventArgs(line, this), (CrownPickedEventArgs e1) =>
+				GameController.OnCrownPick.Invoke(new CrownPickEventArgs(line, this), args =>
 				{
-					line.Events.OnCrownPicked.Invoke(e1, (CrownPickedEventArgs e2) =>
+					line.Events.OnCrownPicked.Invoke(args, args2 =>
 					{
-						if (!e1.canceled && !e2.canceled) { Pick(); }
+						if (!args2.canceled) { Pick(); }
 					});
 				});
 			}

@@ -12,11 +12,11 @@ namespace Level
     {
         public class EventsClass
         {
-            public EventBase<LineTurnEventArgs> OnTurn { get; } = new EventBase<LineTurnEventArgs>();
-            public EventBase<LineDieEventArgs> OnDie { get; } = new EventBase<LineDieEventArgs>();
-            public EventBase<DiamondPickedEventArgs> OnDiamondPicked { get; } = new EventBase<DiamondPickedEventArgs>();
-            public EventBase<CrownPickedEventArgs> OnCrownPicked { get; } = new EventBase<CrownPickedEventArgs>();
-            public EventBase<SkinChangeEventArgs> OnSkinChange { get; } = new EventBase<SkinChangeEventArgs>();
+            public EventPipeline<LineTurnEventArgs> OnTurn { get; } = new EventPipeline<LineTurnEventArgs>();
+            public EventPipeline<LineDieEventArgs> OnDie { get; } = new EventPipeline<LineDieEventArgs>();
+            public EventPipeline<DiamondPickEventArgs> OnDiamondPicked { get; } = new EventPipeline<DiamondPickEventArgs>();
+            public EventPipeline<CrownPickEventArgs> OnCrownPicked { get; } = new EventPipeline<CrownPickEventArgs>();
+            public EventPipeline<SkinChangeEventArgs> OnSkinChange { get; } = new EventPipeline<SkinChangeEventArgs>();
             public UnityEvent OnExitGround { get; } = new UnityEvent();
             public UnityEvent OnEnterGround { get; } = new UnityEvent();
         }
@@ -171,22 +171,19 @@ namespace Level
         {
             if ((IsGrounded && GameController.State == GameState.Playing && controllable && !died) || focus)
             {
-                EventManager.OnLineTurn.Invoke(new LineTurnEventArgs(this, transform.localEulerAngles, nextWay, focus), e1 =>
+                Events.OnTurn.Invoke(new LineTurnEventArgs(this, transform.localEulerAngles, NextWay, focus), args =>
                 {
-                    Events.OnTurn.Invoke(e1, e2 =>
+                    if (!args.canceled)
                     {
-                        if (!e2.canceled)
+                        if (IsGrounded || focus)
                         {
-                            if (IsGrounded || focus)
-                            {
-                                Move();
-                                (transform.localEulerAngles, nextWay) = (nextWay, transform.localEulerAngles);
-                                Skin.Turn(focus);
-                                previousTurnPosition = transform.position;
-                                previousTurnTime = Time.time;
-                            }
+                            Move();
+                            (transform.localEulerAngles, nextWay) = (nextWay, transform.localEulerAngles);
+                            Skin.Turn(focus);
+                            previousTurnPosition = transform.position;
+                            previousTurnTime = Time.time;
                         }
-                    });
+                    }
                 });
             }
         }
@@ -214,14 +211,14 @@ namespace Level
 
         public void Die(DeathCause cause)
 		{
-            EventManager.OnLineDie.Invoke(new LineDieEventArgs(this, cause), e1 =>
-            {
-                Events.OnDie.Invoke(e1, (LineDieEventArgs e2) =>
+            GameController.OnLineDie.Invoke(new LineDieEventArgs(this, cause), args =>
+			{
+                Events.OnDie.Invoke(args, args2 =>
                 {
-                    if (!e2.canceled)
+                    if (!args2.canceled)
                     {
                         died = true;
-                        switch (e2.cause)
+                        switch (args2.cause)
                         {
                             case DeathCause.Obstacle:
                                 Moving = false;
@@ -231,7 +228,7 @@ namespace Level
                             case DeathCause.Water:
                                 break;
                         }
-                        Skin.Die(e2.cause);
+                        Skin.Die(args2.cause);
                         if (overWhenDie) { GameController.GameOver(true); }
                     }
                 });
@@ -246,12 +243,12 @@ namespace Level
             bool canceled = false;
             if (Skin != null)  // 初始化的时候Skin是null
 			{
-                EventManager.OnSkinChange.Invoke(new SkinChangeEventArgs(this, Skin.GetType(), newSkinType), e1 =>
+                GameController.OnSkinChange.Invoke(new SkinChangeEventArgs(this, Skin.GetType(), newSkinType), args =>
                 {
-                    Events.OnSkinChange.Invoke(e1, e2 =>
+                    Events.OnSkinChange.Invoke(args, args2 =>
                     {
-                        canceled = e2.canceled;
-                        newSkinType = e2.newSkin;
+                        canceled = args2.canceled;
+                        newSkinType = args2.newSkin;
                     });
                 });
             }

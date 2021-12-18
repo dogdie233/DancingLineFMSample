@@ -89,11 +89,11 @@ namespace Level
 			{
 				Line line = other.GetComponent<Line>();
 				if (limit != null && line != limit) { return; }
-				EventManager.OnDiamondPicked.Invoke(new DiamondPickedEventArgs(line, this, true), (DiamondPickedEventArgs e1) =>
+				GameController.OnDiamondPick.Invoke(new DiamondPickEventArgs(line, this, true), args =>
 				{
-					line.Events.OnDiamondPicked.Invoke(e1, (DiamondPickedEventArgs e2) =>
+					line.Events.OnDiamondPicked.Invoke(args, args2 =>
 					{
-						if (!e1.canceled && !e2.canceled) { Pick(); }
+						if (!args2.canceled) { Pick(); }
 					});
 				});
 			}

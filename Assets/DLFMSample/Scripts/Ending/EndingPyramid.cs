@@ -16,32 +16,44 @@ namespace Level.Ending
 		private Tweener leftTweener;
 		private Tweener rightTweener;
 
-		private void Start()
+		private void OnEnable()
 		{
-			EventManager.OnStateChange.AddListener(args =>
+			leftTweener = left.DOLocalMoveX(-scale, time).SetEase(curve).Pause();
+			rightTweener = right.DOLocalMoveX(scale, time).SetEase(curve).Pause();
+			GameController.OnStateChange.AddListener(OnStateChange, Priority.Monitor);
+		}
+
+		private void OnDisable()
+		{
+			leftTweener.Kill();
+			leftTweener = null;
+			rightTweener.Kill();
+			rightTweener = null;
+			GameController.OnStateChange.RemoveListener(OnStateChange, Priority.Monitor);
+		}
+
+		private void OnStateChange(StateChangeEventArgs args)
+		{
+			switch (args.newState)
 			{
-				switch (args.newState)
-				{
-					case GameState.WaitingRespawn:
-						leftTweener?.Kill();
-						leftTweener = null;
-						rightTweener?.Kill();
-						rightTweener = null;
-						break;
-					case GameState.WaitingContinue:
-						left.position = Vector3.zero;
-						right.position = Vector3.zero;
-						break;
-				}
-				return args;
-			}, Priority.Monitor);
+				case GameState.WaitingRespawn:
+					leftTweener?.Pause();
+					rightTweener?.Pause();
+					break;
+				case GameState.WaitingContinue:
+					leftTweener.ForceInit();
+					rightTweener?.ForceInit();
+					left.position = Vector3.zero;
+					right.position = Vector3.zero;
+					break;
+			}
 		}
 
 		public void OnOpenTriggerEnter()
 		{
 			// 开门动画
-			leftTweener = left.DOLocalMoveX(-scale, time).SetEase(curve);
-			rightTweener = right.DOLocalMoveX(scale, time).SetEase(curve);
+			leftTweener?.Play();
+			rightTweener?.Play();
 			Debug.Log(GameController.lines[0].name);
 			foreach (Line line in GameController.lines)
 			{

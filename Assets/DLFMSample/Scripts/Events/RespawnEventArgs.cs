@@ -1,16 +1,13 @@
 ﻿using Level;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Event
 {
-	public class RespawnEventArgs
+	public class RespawnEventArgs : EventArgsBase
 	{
-		public readonly Level.Crown crown;
-		public bool canceled = false;
+		public readonly Crown crown;
 
-		public RespawnEventArgs(Level.Crown crown)
+		public RespawnEventArgs(Crown crown)
 		{
 			this.crown = crown;
 		}

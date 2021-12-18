@@ -10,8 +10,9 @@ namespace Level.Animations
 
         void Start()
         {
-            EventManager.OnStateChange.AddListener(args =>
+            GameController.OnStateChange.AddListener(args =>
             {
+				if (args.canceled) { return; }
                 switch (args.newState)
                 {
                     case GameState.SelectingSkins:
@@ -27,13 +28,12 @@ namespace Level.Animations
                         timeline.Pause();
                         break;
                 }
-                return args;
             }, Priority.Monitor);
-            EventManager.OnRespawn.AddListener(args =>
+            GameController.OnRespawn.AddListener(args =>
             {
+                if (args.canceled) { return; }
                 timeline.time = args.crown.Time;
                 timeline.Evaluate();
-                return args;
             }, Priority.Monitor);
         }
     }

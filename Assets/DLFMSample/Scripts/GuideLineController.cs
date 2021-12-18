@@ -109,7 +109,7 @@ namespace Level
 			if (editing && Application.isPlaying)
 			{
 				previousFrameSpeed = line.Speed;
-				line.Events.OnTurn.AddListener(onLineTurnEditor, Priority.Monitor);
+				line.Events.OnTurn.AddListener(OnLineTurnEditor, Priority.Monitor);
 				line.Events.OnEnterGround.AddListener(() =>
 				{
 					if (GameController.State == GameState.Playing)
@@ -131,8 +131,8 @@ namespace Level
 
 		private void OnEnable()
 		{
-			EventManager.OnRespawn.AddListener(OnRespawn, Priority.Monitor);
-			EventManager.OnStateChange.AddListener(OnStateChange, Priority.Monitor);
+			GameController.OnRespawn.AddListener(OnRespawn, Priority.Monitor);
+			GameController.OnStateChange.AddListener(OnStateChange, Priority.Monitor);
 			foreach (Camera camera in cameras)
 			{
 				camera.AddCommandBuffer(CameraEvent.AfterForwardOpaque, buffer);
@@ -142,17 +142,17 @@ namespace Level
 
 		private void OnDisable()
 		{
-			EventManager.OnRespawn.RemoveListener(OnRespawn, Priority.Monitor);
-			EventManager.OnStateChange.RemoveListener(OnStateChange, Priority.Monitor);
+			GameController.OnRespawn.RemoveListener(OnRespawn, Priority.Monitor);
+			GameController.OnStateChange.RemoveListener(OnStateChange, Priority.Monitor);
 			foreach (Camera camera in cameras)
 			{
 				camera.RemoveCommandBuffer(CameraEvent.AfterForwardOpaque, buffer);
 			}
 		}
 
-		private StateChangeEventArgs OnStateChange(StateChangeEventArgs e)
+		private void OnStateChange(StateChangeEventArgs e)
 		{
-			if (e.canceled) { return e; }
+			if (e.canceled) { return; }
 			if (e.newState == GameState.SelectingSkins) { showIndex = 0; }
 #if UNITY_EDITOR
 			if (editing)
@@ -172,24 +172,22 @@ namespace Level
 				}
 			}
 #endif
-			return e;
 		}
 #if UNITY_EDITOR
-		private LineTurnEventArgs onLineTurnEditor(LineTurnEventArgs e)
+		private void OnLineTurnEditor(LineTurnEventArgs e)
 		{
+			if (e.canceled) { return; }
 			editingKeyframe.end = line.transform.position - Quaternion.Euler(line.NextWay) * Vector3.forward * frameWidth / 2f;
 			keyframesInEditing.Add(editingKeyframe);
 			editingKeyframe = new GuideLineKeyFrame((Time.time - GameController.StartTime) + (frameWidth / 2f) / line.Speed, line.Speed, line.transform.position + Quaternion.Euler(line.transform.localEulerAngles) * Vector3.forward * frameWidth / 2f, Vector3.zero);
-			return e;
 		}
 #endif
 
-		private RespawnEventArgs OnRespawn(RespawnEventArgs e)
+		private void OnRespawn(RespawnEventArgs e)
 		{
-			if (e.canceled) { return e; }
+			if (e.canceled) { return; }
 			showIndex = 0;
 			while (e.crown.Time + disappearEarlyTime >= lines[showIndex].time) { showIndex++; }
-			return e;
 		}
 
 		private void MakeGuideLine()

@@ -18,10 +18,10 @@ namespace Event
 
 	public struct HandlerAttributes<T> : IEquatable<HandlerAttributes<T>>
 	{
-		public Func<T, T> action;
+		public Action<T> action;
 		public Priority priority;
 
-		public HandlerAttributes(Func<T, T> action, Priority priority)
+		public HandlerAttributes(Action<T> action, Priority priority)
 		{
 			this.action = action;
 			this.priority = priority;
@@ -47,46 +47,51 @@ namespace Event
 		}
 	}
 
-	public class EventBase<T>
+	public class EventPipeline<T> where T : EventArgsBase
 	{
 		private LinkedList<HandlerAttributes<T>> handlers = new LinkedList<HandlerAttributes<T>>();
 		private ReaderWriterLockSlim lockSlim = new ReaderWriterLockSlim();
+		private LinkedListNode<HandlerAttributes<T>>[] lastPriorityNodePositions;
+		private bool invoking;
 
-		public void AddListener(Func<T, T> action, Priority priority)
+		public EventPipeline()
 		{
+			lastPriorityNodePositions = new LinkedListNode<HandlerAttributes<T>>[Enum.GetNames(typeof(Priority)).Length];
+		}
+
+		public void AddListener(Action<T> action, Priority priority)
+		{
+			if (invoking) { throw new LockRecursionException("died lock"); }
 			lockSlim.EnterWriteLock();
-			if (handlers.Count == 0)
+			var handlerAttributes = new HandlerAttributes<T>(action, priority);
+			if (lastPriorityNodePositions[(int)priority] == null)
 			{
-				handlers.AddFirst(new LinkedListNode<HandlerAttributes<T>>(new HandlerAttributes<T>(action, priority)));
-				lockSlim.ExitWriteLock();
-				return;
-			}
-			if (priority == Priority.Monitor)
-			{
-				handlers.AddLast(new HandlerAttributes<T>(action, priority));
-				lockSlim.ExitWriteLock();
-				return;
-			}
-			LinkedListNode<HandlerAttributes<T>> node = handlers.First;
-			while (true)
-			{
-				if ((int)node.Value.priority < (int)priority)
+				// 往前找
+				for (int i = (int)priority - 1; i >= 0; i--)
 				{
-					handlers.AddBefore(node, new LinkedListNode<HandlerAttributes<T>>(new HandlerAttributes<T>(action, priority)));
-					break;
+					if (lastPriorityNodePositions[i] != null)
+					{
+						var node = handlers.AddAfter(lastPriorityNodePositions[i], handlerAttributes);
+						lastPriorityNodePositions[(int)priority] = node;
+						lockSlim.ExitWriteLock();
+						return;
+					}
 				}
-				if (node.Next == null)
-				{
-					handlers.AddLast(new LinkedListNode<HandlerAttributes<T>>(new HandlerAttributes<T>(action, priority)));
-					break;
-				}
-				node = node.Next;
+				// 找不到
+				handlers.AddFirst(handlerAttributes);
+				lastPriorityNodePositions[(int)priority] = handlers.First;
+			}
+			else
+			{
+				var node = handlers.AddAfter(lastPriorityNodePositions[(int)priority], handlerAttributes);
+				lastPriorityNodePositions[(int)priority] = node;
 			}
 			lockSlim.ExitWriteLock();
 		}
 
-		public bool RemoveListener(Func<T, T> action, Priority priority)
+		public bool RemoveListener(Action<T> action, Priority priority)
 		{
+			if (invoking) { throw new LockRecursionException("died lock"); }
 			HandlerAttributes<T> handler = new HandlerAttributes<T>(action, priority);
 			lockSlim.EnterWriteLock();
 			bool succeed = handlers.Remove(handler);
@@ -94,25 +99,24 @@ namespace Event
 			return succeed;
 		}
 
-		public void Invoke(T arg, Action<T> callback = null)
+		public void Invoke(T args, Action<T> callback = null)
 		{
-			T newArg;
 			bool callbackRan = false;
 			lockSlim.EnterReadLock();
+			invoking = true;
 			foreach (HandlerAttributes<T> handler in handlers)
 			{
 				try
 				{
 					if (handler.priority != Priority.Monitor)
 					{
-						newArg = handler.action.Invoke(arg);
-						arg = newArg;
+						handler.action.Invoke(args);
 					}
 					else
 					{
-						if (!callbackRan) { callback?.Invoke(arg); }
+						if (!callbackRan) { callback?.Invoke(args); }
 						callbackRan = true;
-						handler.action.Invoke(arg);
+						handler.action.Invoke(args);
 					}
 				}
 				catch (Exception e)
@@ -121,18 +125,8 @@ namespace Event
 				}
 			}
 			lockSlim.ExitReadLock();
-			if (!callbackRan) { callback?.Invoke(arg); }
+			invoking = false;
+			if (!callbackRan) { callback?.Invoke(args); }
 		}
-	}
-
-	public static class EventManager
-	{
-		public static EventBase<StateChangeEventArgs> OnStateChange { get; } = new EventBase<StateChangeEventArgs>();
-		public static EventBase<DiamondPickedEventArgs> OnDiamondPicked { get; } = new EventBase<DiamondPickedEventArgs>();
-		public static EventBase<CrownPickedEventArgs> OnCrownPicked { get; } = new EventBase<CrownPickedEventArgs>();
-		public static EventBase<RespawnEventArgs> OnRespawn { get; } = new EventBase<RespawnEventArgs>();
-		public static EventBase<LineTurnEventArgs> OnLineTurn { get; } = new EventBase<LineTurnEventArgs>();
-		public static EventBase<LineDieEventArgs> OnLineDie { get; } = new EventBase<LineDieEventArgs>();
-		public static EventBase<SkinChangeEventArgs> OnSkinChange { get; } = new EventBase<SkinChangeEventArgs>();
 	}
 }

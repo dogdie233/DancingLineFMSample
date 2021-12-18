@@ -37,18 +37,27 @@ namespace Level
         public static List<ICollection> collections = new List<ICollection>();
         public static List<Crown> crowns;
         private static float startTime;
-
         public static GameController Instance => instance;
         public static float StartTime => startTime;
+
+        #region Events
+        public static EventPipeline<StateChangeEventArgs> OnStateChange { get; private set; }
+        public static EventPipeline<RespawnEventArgs> OnRespawn { get; private set; }
+        public static EventPipeline<DiamondPickEventArgs> OnDiamondPick { get; private set; }
+        public static EventPipeline<CrownPickEventArgs> OnCrownPick { get; private set; }
+        public static EventPipeline<LineDieEventArgs> OnLineDie { get; private set; }
+        public static EventPipeline<SkinChangeEventArgs> OnSkinChange { get; private set; }
+        #endregion
 
         public static GameState State
 		{
 			get { return _state; }
+            //[Obsolete]
             set
             {
                 if (_state != value)
                 {
-                    EventManager.OnStateChange.Invoke(new StateChangeEventArgs(_state, value), (StateChangeEventArgs e) =>
+                    OnStateChange.Invoke(new StateChangeEventArgs(_state, value), (StateChangeEventArgs e) =>
                     {
                         if (!e.canceled)
                         {
@@ -92,6 +101,12 @@ namespace Level
                 this.enabled = false;
                 return;
             }
+            OnStateChange = new EventPipeline<StateChangeEventArgs>();
+            OnRespawn = new EventPipeline<RespawnEventArgs>();
+            OnDiamondPick = new EventPipeline<DiamondPickEventArgs>();
+            OnCrownPick = new EventPipeline<CrownPickEventArgs>();
+            OnLineDie = new EventPipeline<LineDieEventArgs>();
+            OnSkinChange = new EventPipeline<SkinChangeEventArgs>();
         }
 
         private void OnBackgroundButtonClick()
@@ -119,10 +134,10 @@ namespace Level
 
 		public static void Respawn(Crown crown)
 		{
-            EventManager.OnRespawn.Invoke(new RespawnEventArgs(crown), e1 =>
+            OnRespawn.Invoke(new RespawnEventArgs(crown), e1 =>
             {
                 if (e1.canceled) { return; }
-                EventManager.OnStateChange.Invoke(new StateChangeEventArgs(_state, GameState.WaitingContinue), (StateChangeEventArgs e2) =>
+                OnStateChange.Invoke(new StateChangeEventArgs(_state, GameState.WaitingContinue), (StateChangeEventArgs e2) =>
                 {
                     if (!e2.canceled)
                     {
