@@ -10,7 +10,7 @@ namespace Level.Animations
 
         void Start()
         {
-            GameController.OnStateChange.AddListener(args =>
+            GameController.Instance.OnStateChange.AddListener(args =>
             {
 				if (args.canceled) { return; }
                 switch (args.newState)
@@ -29,7 +29,7 @@ namespace Level.Animations
                         break;
                 }
             }, Priority.Monitor);
-            GameController.OnRespawn.AddListener(args =>
+            GameController.Instance.OnRespawn.AddListener(args =>
             {
                 if (args.canceled) { return; }
                 timeline.time = args.crown.Time;

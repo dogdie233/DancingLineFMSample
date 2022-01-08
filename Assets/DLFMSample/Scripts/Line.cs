@@ -131,6 +131,7 @@ namespace Level
 
         public void GoOffset(Vector3 offset)
         {
+            if (IsGrounded) { Skin.StartFly(); }
             transform.position += offset;
             previousTurnPosition += offset;
         }
@@ -169,7 +170,7 @@ namespace Level
         /// <param name="focus">是否为强制转弯(即无视controlled, IsGrounded, State)</param>
         public void Turn(bool focus)
         {
-            if ((IsGrounded && GameController.State == GameState.Playing && controllable && !died) || focus)
+            if ((IsGrounded && GameController.Instance.State == GameState.Playing && controllable && !died) || focus)
             {
                 Events.OnTurn.Invoke(new LineTurnEventArgs(this, transform.localEulerAngles, NextWay, focus), args =>
                 {
@@ -211,7 +212,7 @@ namespace Level
 
         public void Die(DeathCause cause)
 		{
-            GameController.OnLineDie.Invoke(new LineDieEventArgs(this, cause), args =>
+            GameController.Instance.OnLineDie.Invoke(new LineDieEventArgs(this, cause), args =>
 			{
                 Events.OnDie.Invoke(args, args2 =>
                 {
@@ -229,7 +230,7 @@ namespace Level
                                 break;
                         }
                         Skin.Die(args2.cause);
-                        if (overWhenDie) { GameController.GameOver(true); }
+                        if (overWhenDie) { GameController.Instance.GameOver(true); }
                     }
                 });
             });
@@ -243,7 +244,7 @@ namespace Level
             bool canceled = false;
             if (Skin != null)  // 初始化的时候Skin是null
 			{
-                GameController.OnSkinChange.Invoke(new SkinChangeEventArgs(this, Skin.GetType(), newSkinType), args =>
+                GameController.Instance.OnSkinChange.Invoke(new SkinChangeEventArgs(this, Skin.GetType(), newSkinType), args =>
                 {
                     Events.OnSkinChange.Invoke(args, args2 =>
                     {

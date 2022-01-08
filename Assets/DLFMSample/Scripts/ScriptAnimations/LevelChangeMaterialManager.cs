@@ -26,9 +26,9 @@ namespace Level.Animations
 				return;
 			}
 			instance = this;
-			GameController.OnStateChange.AddListener(OnStateChange, Priority.Monitor);
-			GameController.OnCrownPick.AddListener(OnCrownPick, Priority.Monitor);
-			GameController.OnRespawn.AddListener(OnRespawn, Priority.Monitor);
+			GameController.Instance.OnStateChange.AddListener(OnStateChange, Priority.Monitor);
+			GameController.Instance.OnCrownPick.AddListener(OnCrownPick, Priority.Monitor);
+			GameController.Instance.OnRespawn.AddListener(OnRespawn, Priority.Monitor);
 		}
 
 		private void OnDestroy()
@@ -42,9 +42,9 @@ namespace Level.Animations
 				attribute.Key.color = attribute.Value;
 			}
 			instance = null;
-			GameController.OnStateChange.RemoveListener(OnStateChange, Priority.Monitor);
-			GameController.OnCrownPick.RemoveListener(OnCrownPick, Priority.Monitor);
-			GameController.OnRespawn.RemoveListener(OnRespawn, Priority.Monitor);
+			GameController.Instance.OnStateChange.RemoveListener(OnStateChange, Priority.Monitor);
+			GameController.Instance.OnCrownPick.RemoveListener(OnCrownPick, Priority.Monitor);
+			GameController.Instance.OnRespawn.RemoveListener(OnRespawn, Priority.Monitor);
 		}
 
 		private void OnStateChange(StateChangeEventArgs e)

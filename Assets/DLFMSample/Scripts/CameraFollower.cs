@@ -34,7 +34,7 @@ namespace Level
             followPoint = line.transform.position;
             pivotOffset = initPivotOffset;
             arm.transform.position = followPoint + pivotOffset;
-            GameController.OnStateChange.AddListener(e =>
+            GameController.Instance.OnStateChange.AddListener(e =>
             {
                 if (e.canceled) { return; }
                 switch (e.newState)
@@ -55,7 +55,7 @@ namespace Level
                         break;
                 }
             }, Priority.Monitor);
-            GameController.OnRespawn.AddListener(e =>
+            GameController.Instance.OnRespawn.AddListener(e =>
             {
                 foreach (CameraFollowerRespawnAttributes attributes in e.crown.CameraFollowerRespawnAttributes)
                 {
@@ -76,7 +76,7 @@ namespace Level
 
         private void Update()
         {
-            if (GameController.State == GameState.Playing)
+            if (GameController.Instance.State == GameState.Playing)
 			{
                 followPoint = Vector3.SmoothDamp(followPoint, line.transform.position, ref currentVelocity, smoothTime);
                 arm.transform.position = followPoint + pivotOffset;

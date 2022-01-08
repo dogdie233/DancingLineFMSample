@@ -112,14 +112,14 @@ namespace Level
 				line.Events.OnTurn.AddListener(OnLineTurnEditor, Priority.Monitor);
 				line.Events.OnEnterGround.AddListener(() =>
 				{
-					if (GameController.State == GameState.Playing)
+					if (GameController.Instance.State == GameState.Playing)
 					{
 						editingKeyframe = new GuideLineKeyFrame(Time.time - GameController.StartTime, line.Speed, line.transform.position, Vector3.zero);
 					}
 				});
 				line.Events.OnExitGround.AddListener(() =>
 				{
-					if (GameController.State == GameState.Playing)
+					if (GameController.Instance.State == GameState.Playing)
 					{
 						editingKeyframe.end = line.transform.position - Quaternion.Euler(line.transform.localEulerAngles) * Vector3.forward * collider.size.z * line.transform.localScale.z;
 						keyframesInEditing.Add(editingKeyframe);
@@ -131,8 +131,8 @@ namespace Level
 
 		private void OnEnable()
 		{
-			GameController.OnRespawn.AddListener(OnRespawn, Priority.Monitor);
-			GameController.OnStateChange.AddListener(OnStateChange, Priority.Monitor);
+			GameController.Instance.OnRespawn.AddListener(OnRespawn, Priority.Monitor);
+			GameController.Instance.OnStateChange.AddListener(OnStateChange, Priority.Monitor);
 			foreach (Camera camera in cameras)
 			{
 				camera.AddCommandBuffer(CameraEvent.AfterForwardOpaque, buffer);
@@ -142,8 +142,8 @@ namespace Level
 
 		private void OnDisable()
 		{
-			GameController.OnRespawn.RemoveListener(OnRespawn, Priority.Monitor);
-			GameController.OnStateChange.RemoveListener(OnStateChange, Priority.Monitor);
+			GameController.Instance.OnRespawn.RemoveListener(OnRespawn, Priority.Monitor);
+			GameController.Instance.OnStateChange.RemoveListener(OnStateChange, Priority.Monitor);
 			foreach (Camera camera in cameras)
 			{
 				camera.RemoveCommandBuffer(CameraEvent.AfterForwardOpaque, buffer);

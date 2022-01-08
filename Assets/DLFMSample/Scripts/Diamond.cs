@@ -89,7 +89,7 @@ namespace Level
 			{
 				Line line = other.GetComponent<Line>();
 				if (limit != null && line != limit) { return; }
-				GameController.OnDiamondPick.Invoke(new DiamondPickEventArgs(line, this, true), args =>
+				GameController.Instance.OnDiamondPick.Invoke(new DiamondPickEventArgs(line, this, true), args =>
 				{
 					line.Events.OnDiamondPicked.Invoke(args, args2 =>
 					{

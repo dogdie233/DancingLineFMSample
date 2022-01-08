@@ -41,15 +41,15 @@ namespace Level
         public static float StartTime => startTime;
 
         #region Events
-        public static EventPipeline<StateChangeEventArgs> OnStateChange { get; private set; }
-        public static EventPipeline<RespawnEventArgs> OnRespawn { get; private set; }
-        public static EventPipeline<DiamondPickEventArgs> OnDiamondPick { get; private set; }
-        public static EventPipeline<CrownPickEventArgs> OnCrownPick { get; private set; }
-        public static EventPipeline<LineDieEventArgs> OnLineDie { get; private set; }
-        public static EventPipeline<SkinChangeEventArgs> OnSkinChange { get; private set; }
+        public EventPipeline<StateChangeEventArgs> OnStateChange { get; private set; }
+        public EventPipeline<RespawnEventArgs> OnRespawn { get; private set; }
+        public EventPipeline<DiamondPickEventArgs> OnDiamondPick { get; private set; }
+        public EventPipeline<CrownPickEventArgs> OnCrownPick { get; private set; }
+        public EventPipeline<LineDieEventArgs> OnLineDie { get; private set; }
+        public EventPipeline<SkinChangeEventArgs> OnSkinChange { get; private set; }
         #endregion
 
-        public static GameState State
+        public GameState State
 		{
 			get { return _state; }
             //[Obsolete]
@@ -132,7 +132,7 @@ namespace Level
 			if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space)) { OnBackgroundButtonClick(); }
 		}
 
-		public static void Respawn(Crown crown)
+		public void Respawn(Crown crown)
 		{
             OnRespawn.Invoke(new RespawnEventArgs(crown), e1 =>
             {
@@ -159,7 +159,7 @@ namespace Level
             });
         }
 
-        public static void GameOver(bool fail)
+        public void GameOver(bool fail)
 		{
             if (fail)
 			{

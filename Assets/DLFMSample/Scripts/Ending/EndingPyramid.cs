@@ -20,7 +20,7 @@ namespace Level.Ending
 		{
 			leftTweener = left.DOLocalMoveX(-scale, time).SetEase(curve).Pause();
 			rightTweener = right.DOLocalMoveX(scale, time).SetEase(curve).Pause();
-			GameController.OnStateChange.AddListener(OnStateChange, Priority.Monitor);
+			GameController.Instance.OnStateChange.AddListener(OnStateChange, Priority.Monitor);
 		}
 
 		private void OnDisable()
@@ -29,7 +29,7 @@ namespace Level.Ending
 			leftTweener = null;
 			rightTweener.Kill();
 			rightTweener = null;
-			GameController.OnStateChange.RemoveListener(OnStateChange, Priority.Monitor);
+			GameController.Instance.OnStateChange.RemoveListener(OnStateChange, Priority.Monitor);
 		}
 
 		private void OnStateChange(StateChangeEventArgs args)
@@ -63,7 +63,7 @@ namespace Level.Ending
 
 		public void OnFinishTriggerEnter()
 		{
-			GameController.GameOver(false);
+			GameController.Instance.GameOver(false);
 		}
 	}
 }

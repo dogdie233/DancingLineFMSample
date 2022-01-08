@@ -11,7 +11,7 @@ namespace Level
         {
             if (Input.GetKeyDown(KeyCode.R))
 			{
-                GameController.State = GameState.SelectingSkins;
+                GameController.Instance.State = GameState.SelectingSkins;
 			}
         }
     }
