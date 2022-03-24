@@ -43,5 +43,38 @@ namespace Level
 		public static bool operator !=(ParticlesGroup i1, ParticlesGroup i2) => !i1.Equals(i2);
 		public override int GetHashCode() => particles.GetHashCode();
 		public override string ToString() => $"ParticlesGroup, length: {particles.Length}";
+
+		/// <summary>
+		/// 生成组里面的所有粒子并启用
+		/// </summary>
+		/// <param name="parent">生成的粒子的父变换组件</param>
+		/// <param name="active">生成时设置的激活状态</param>
+		/// <param name="destroyOnTime">是否在到达alive时间时销毁</param>
+		public void PlayAll(Transform parent, bool active = true, bool destroyOnTime = true)
+        {
+			foreach (var particle in particles)
+            {
+				var go = GameObject.Instantiate(particle.obj, parent);
+				go.SetActive(active);
+				if (destroyOnTime) { GameObject.Destroy(go, particle.alive); }
+            }
+        }
+
+		/// <summary>
+		/// 生成组里面的所有粒子并启用
+		/// </summary>
+		/// <param name="position">生成的粒子的位置</param>
+		/// <param name="parent">生成的粒子的父变换组件</param>
+		/// <param name="active">生成时设置的激活状态</param>
+		/// <param name="destroyOnTime">是否在到达alive时间时销毁</param>
+		public void PlayAll(Vector3 position, Transform parent, bool active = true, bool destroyOnTime = true)
+		{
+			foreach (var particle in particles)
+			{
+				var go = GameObject.Instantiate(particle.obj, position, particle.obj.transform.rotation, parent);
+				go.SetActive(active);
+				if (destroyOnTime) { GameObject.Destroy(go, particle.alive); }
+			}
+		}
 	}
 }

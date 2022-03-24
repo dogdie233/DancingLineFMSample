@@ -62,11 +62,8 @@ namespace Level.Skins
 			// 生成跳跃粒子
 			if (skinInfo.jumpEffectParticles.Length != 0)
 			{
-				foreach (ParticleAttributes particle in skinInfo.jumpEffectParticles[UnityEngine.Random.Range(0, skinInfo.jumpEffectParticles.Length)].particles)
-				{
-					GameObject particleObj = GameObject.Instantiate(particle.obj, line.transform.position, line.transform.rotation, particlesParent);
-					GameObject.Destroy(particleObj, particle.alive);
-				}
+				var particlesGroup = skinInfo.jumpEffectParticles.Random();
+				particlesGroup.PlayAll(line.transform.position, null);
 			}
 		}
 

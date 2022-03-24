@@ -29,14 +29,14 @@ namespace Level
     {
         private static GameController instance = null;
         public readonly List<Line> lines = new List<Line>();
-        public AudioMixerGroup soundMixerGroup;
         private GameState _state = GameState.SelectingSkins;
-        public List<Crown> crowns;
         private float startTime;
 
         public static GameController Instance => instance;
         public float StartTime => startTime;
-        public float LevelTime => BGMController.Time;
+        // 未来这里还有延迟设置
+        public float LevelTime => BGMController.Instance.IsPlaying ? (float)AudioSettings.dspTime - BGMController.Instance.LastPlayTime : BGMController.Instance.Time;
+        public float AudioTime => BGMController.Instance.IsPlaying ? (float)AudioSettings.dspTime - BGMController.Instance.LastPlayTime : BGMController.Instance.Time;
 
         #region Events
         public EventPipeline<StateChangeEventArgs> OnStateChange { get; private set; }
@@ -50,7 +50,7 @@ namespace Level
         public GameState State
 		{
 			get { return _state; }
-            set
+            internal set
             {
                 if (_state != value)
                 {
@@ -123,7 +123,7 @@ namespace Level
                 {
                     collection.Key.Recover();
                 }
-                BGMController.Time = checkpoint.Time;
+                BGMController.Instance.Time = checkpoint.Time;
                 BGMController.Instance.StopImmediately();
             });
         }
@@ -133,7 +133,7 @@ namespace Level
             switch (State)
             {
                 case GameState.Playing:
-                    if (lastState == GameState.WaitingStart) { startTime = Time.time; }
+                    if (lastState == GameState.WaitingStart) { startTime = (float)AudioSettings.dspTime; }
                     BGMController.Instance.Play();
                     break;
                 case GameState.SelectingSkins:  // 重开
@@ -143,7 +143,7 @@ namespace Level
                     {
                         collection.Key.Recover();
                     }
-                    BGMController.Time = 0f;
+                    BGMController.Instance.Time = 0f;
                     BGMController.Instance.StopImmediately();
                     break;
                 case GameState.WaitingRespawn:
@@ -188,9 +188,6 @@ namespace Level
             State = GameState.GameOver;
 		}
 
-        public void PlaySound(AudioClip clip)
-		{
-            AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position);
-        }
+        public void PlaySound(AudioClip clip) => AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position);
     }
 }

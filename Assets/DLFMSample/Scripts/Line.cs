@@ -101,7 +101,7 @@ namespace Level
                     autoIndex = 0;
                     for (int i = 0; i < turnTime.Count; i++)
 					{
-                        if (BGMController.Time > turnTime[i]) { autoIndex = i; }
+                        if (GameController.Instance.LevelTime > turnTime[i]) { autoIndex = i; }
 					}
 				}
                 auto = value;
@@ -162,7 +162,7 @@ namespace Level
             if (Moving)
 			{
                 Move();
-                if (auto && autoIndex < turnTime.Count && turnTime[autoIndex] < BGMController.Time)
+                if (auto && autoIndex < turnTime.Count && turnTime[autoIndex] < GameController.Instance.LevelTime)
 				{
                     Turn(true);
                     autoIndex++;

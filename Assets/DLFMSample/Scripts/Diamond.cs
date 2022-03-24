@@ -10,7 +10,7 @@ namespace Level
 		public GameObject child;
 		[SerializeField] private float speed;
 		[SerializeField] private Line limit;
-		[SerializeField] private ParticlesGroup[] particles;
+		[SerializeField] private ParticlesGroup[] particles = null;
 		public new Animation animation;
 		private Transform particlesParent;
 		private bool picked = false;  // 被线吃
@@ -52,11 +52,7 @@ namespace Level
 			//粒子效果
 			if (particles.Length == 0) { return; }
 			particlesParent = particlesParent != null ? particlesParent : new GameObject("ParticlesGroup").transform;
-			ParticlesGroup group = particles[Random.Range(0, particles.Length)];
-			foreach (ParticleAttributes particle in group.particles)
-			{
-				Destroy(Instantiate(particle.obj, transform.position, particle.obj.transform.rotation, particlesParent), particle.alive);
-			}
+			particles.Random().PlayAll(transform.position, particlesParent);
 		}
 
 		public void Recover()

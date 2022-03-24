@@ -21,7 +21,6 @@ namespace Level
 		private bool used = false;
 		private Tweener tweener;
 		private new Animation animation;
-		private float pickedTime;
 
 		public float Speed
 		{
@@ -42,7 +41,6 @@ namespace Level
 		public bool IsAuto { get => auto; set => auto = value; }
 		public LineRespawnAttributes[] LineRespawnAttributes { get => lineRespawnAttributes; set => lineRespawnAttributes = value; }
 		public bool IsAvailable => IsPicked;
-		public float PickedTime { get => pickedTime; }
 
 		public void Pick()
 		{
@@ -52,7 +50,7 @@ namespace Level
 			tweener?.Kill();
 			if (auto)
 			{
-				time = BGMController.Time;
+				time = GameController.Instance.LevelTime;
 				lineRespawnAttributes = new LineRespawnAttributes[GameController.Instance.lines.Count];
 				for (int i = 0; i < GameController.Instance.lines.Count; i++)
 				{

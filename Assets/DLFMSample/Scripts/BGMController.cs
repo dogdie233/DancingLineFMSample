@@ -13,41 +13,53 @@ namespace Level
 		private TweenerCore<float, float, FloatOptions> fadeTweener;
 
 		public static BGMController Instance => instance;
-		public static float Time
-		{
-			get => Instance.source.time;
-			set => Instance.source.time = value;
-		}
 
-		public static int TimeSample
+		/// <summary>
+		/// 如果需要更精确的时间，请使用 GameController.AudioTime
+		/// </summary>
+		public float Time
 		{
-			get => Instance.source.timeSamples;
-			set => Instance.source.timeSamples = value;
-		}
-		public static bool IsPlaying
-		{
-			get => Instance.source.isPlaying;
+			get => source.time;
 			set
-			{
-				if (value) { Instance.source.Play(); }
-				else { Instance.source.Pause(); }
+            {
+				source.time = value;
+				LastPlayTime = (float)AudioSettings.dspTime - source.time;
 			}
 		}
 
-		public static AudioClip Clip
+		public int TimeSample
 		{
-			get => Instance.source.clip;
-			set => Instance.source.clip = value;
+			get => source.timeSamples;
+			set => source.timeSamples = value;
 		}
+
+		public bool IsPlaying
+		{
+			get => source.isPlaying;
+			set
+			{
+				if (value) { Play(); }
+				else { StopImmediately(); }
+			}
+		}
+
+		public AudioClip Clip
+		{
+			get => source.clip;
+			set => source.clip = value;
+		}
+
+		public float LastPlayTime { get; private set; }
 
 		private void Awake()
 		{
-			if (instance == null) { instance = this; }
-			else
-			{
-				enabled = false;
+			if (instance != null && instance != this)
+            {
+				Debug.LogWarning($"[BGM Controller] There is another instance({instance.gameObject.name}) in this scene, destroy this.");
+				Destroy(this);
 				return;
-			}
+            }
+			instance = this;
 			source = source ?? GetComponent<AudioSource>();
 			if (source == null)
 			{
@@ -62,14 +74,12 @@ namespace Level
 
 		public void FadeOut()
 		{
-			if (fadeTweener == null) { fadeTweener = source.DOFade(0f, fadeTime).OnComplete(() => { source.Pause(); }).SetAutoKill(false).Play(); }
+			if (fadeTweener == null) { fadeTweener = source.DOFade(0f, fadeTime).OnComplete(() => { source.Pause(); }).SetAutoKill(false); }
 			else { fadeTweener.Restart(); }
 		}
 
 		public void StopImmediately()
 		{
-			/*if (fadeTweener != null) { fadeTweener.Complete(); }
-			else { source.Pause(); }*/
 			fadeTweener?.Complete();
 			source.volume = 1f;
 			source.Pause();
@@ -83,6 +93,7 @@ namespace Level
 			StopImmediately();
 			source.Play();
 			source.volume = 1f;
+			LastPlayTime = (float)AudioSettings.dspTime - source.time;
 		}
 		public void Play(float time)
 		{

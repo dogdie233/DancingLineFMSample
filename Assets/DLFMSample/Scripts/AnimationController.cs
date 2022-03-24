@@ -32,7 +32,7 @@ namespace Level.Animations
             GameController.Instance.OnRespawn.AddListener(args =>
             {
                 if (args.canceled) { return; }
-                timeline.time = BGMController.Time;
+                timeline.time = GameController.Instance.LevelTime;
                 timeline.Evaluate();
             }, Priority.Monitor);
         }

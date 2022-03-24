@@ -238,7 +238,7 @@ namespace Level
 				}
 				if (lines.Length > 0 && showIndex < lines.Length - 1)
 				{
-					while (BGMController.Time + disappearEarlyTime >= lines[showIndex].time)
+					while (GameController.Instance.LevelTime + disappearEarlyTime >= lines[showIndex].time)
 					{
 						showIndex++;
 						ReDraw();
