@@ -959,6 +959,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   soundMixerGroup: {fileID: 243159630443108008, guid: b639d1633d0edae448d51635e8c53c91,
     type: 2}
+  crowns: []
 --- !u!114 &963194230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -974,9 +975,7 @@ MonoBehaviour:
   line: {fileID: 711418597}
   arm: {fileID: 71276380}
   smoothTime: 0.5
-  initPivotOffset: {x: 0, y: 5, z: 0}
   pivotOffset: {x: 0, y: 0, z: 0}
-  followPoint: {x: 0, y: 0, z: 0}
 --- !u!114 &963194231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -990,6 +989,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   source: {fileID: 963194232}
+  fadeTime: 3
 --- !u!82 &963194232
 AudioSource:
   m_ObjectHideFlags: 0

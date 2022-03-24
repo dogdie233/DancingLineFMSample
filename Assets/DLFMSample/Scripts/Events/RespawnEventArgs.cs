@@ -5,11 +5,11 @@ namespace Event
 {
 	public class RespawnEventArgs : EventArgsBase
 	{
-		public readonly Crown crown;
+		public readonly ICheckpoint checkpoint;
 
-		public RespawnEventArgs(Crown crown)
+		public RespawnEventArgs(ICheckpoint checkpoint)
 		{
-			this.crown = crown;
+			this.checkpoint = checkpoint;
 		}
 	}
 }

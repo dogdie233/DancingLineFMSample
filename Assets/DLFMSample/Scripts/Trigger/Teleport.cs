@@ -18,7 +18,7 @@ namespace Level.Triggers
 				line.GoOffset(offset);
 				if (cameraFollower != null)
 				{
-					cameraFollower.followPoint += offset;
+					cameraFollower.FollowPoint += offset;
 				}
 			}
 		}

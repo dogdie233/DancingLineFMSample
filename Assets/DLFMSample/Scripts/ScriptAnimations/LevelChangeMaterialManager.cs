@@ -1,6 +1,7 @@
 ﻿using Event;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using DG.Tweening;
 using DG.Tweening.Core;
@@ -12,9 +13,9 @@ namespace Level.Animations
 	{
 		public static LevelChangeMaterialManager instance;
 		private Dictionary<Material, TweenerCore<Color, Color, ColorOptions>> tweeners = new Dictionary<Material, TweenerCore<Color, Color, ColorOptions>>();
-		private Dictionary<Crown, List<KeyValuePair<Material, Color>>> colorRespawnRecords = new Dictionary<Crown, List<KeyValuePair<Material, Color>>>();
+		private Dictionary<ICheckpoint, List<KeyValuePair<Material, Color>>> colorRespawnRecords = new Dictionary<ICheckpoint, List<KeyValuePair<Material, Color>>>();
 		private List<KeyValuePair<Material, Color>> colorRestartRecords = new List<KeyValuePair<Material, Color>>();
-		private Crown latestCrown;
+		private ICheckpoint latestCheckpoint;
 
 		public static LevelChangeMaterialManager Instance => instance;
 
@@ -27,7 +28,7 @@ namespace Level.Animations
 			}
 			instance = this;
 			GameController.Instance.OnStateChange.AddListener(OnStateChange, Priority.Monitor);
-			GameController.Instance.OnCrownPick.AddListener(OnCrownPick, Priority.Monitor);
+			GameController.Instance.OnCheckpointReach.AddListener(OnCrownPick, Priority.Monitor);
 			GameController.Instance.OnRespawn.AddListener(OnRespawn, Priority.Monitor);
 		}
 
@@ -43,7 +44,7 @@ namespace Level.Animations
 			}
 			instance = null;
 			GameController.Instance.OnStateChange.RemoveListener(OnStateChange, Priority.Monitor);
-			GameController.Instance.OnCrownPick.RemoveListener(OnCrownPick, Priority.Monitor);
+			GameController.Instance.OnCheckpointReach.RemoveListener(OnCrownPick, Priority.Monitor);
 			GameController.Instance.OnRespawn.RemoveListener(OnRespawn, Priority.Monitor);
 		}
 
@@ -59,7 +60,7 @@ namespace Level.Animations
 					}
 					break;
 				case GameState.SelectingSkins:
-					latestCrown = null;
+					latestCheckpoint = null;
 					colorRespawnRecords.Clear();
 					foreach (KeyValuePair<Material, TweenerCore<Color, Color, ColorOptions>> kvp in tweeners)
 					{
@@ -77,13 +78,13 @@ namespace Level.Animations
 		private void OnCrownPick(CrownPickEventArgs e)
 		{
 			if (e.canceled) { return; }
-			latestCrown = e.crown;
-			colorRespawnRecords.Add(e.crown, new List<KeyValuePair<Material, Color>>());
+			latestCheckpoint = e.checkpoint;
+			colorRespawnRecords.Add(e.checkpoint, new List<KeyValuePair<Material, Color>>());
 			foreach (KeyValuePair<Material, TweenerCore<Color, Color, ColorOptions>> kvp in tweeners)
 			{
 				if (kvp.Value.IsPlaying())
 				{
-					colorRespawnRecords[e.crown].Add(new KeyValuePair<Material, Color>(kvp.Key, kvp.Value.endValue));
+					colorRespawnRecords[e.checkpoint].Add(new KeyValuePair<Material, Color>(kvp.Key, kvp.Value.endValue));
 				}
 			}
 		}
@@ -92,10 +93,17 @@ namespace Level.Animations
 		private void OnRespawn(RespawnEventArgs e)
 		{
 			if (e.canceled) { return; }
-			List<KeyValuePair<Material, Color>> attributes = colorRespawnRecords[e.crown];
-			foreach (KeyValuePair<Material, Color> attribute in attributes)
+			var checkpoints = colorRespawnRecords.Where(kvp => kvp.Key.Time >= e.checkpoint.Time).ToArray();
+			Array.Sort(checkpoints, (c1, c2) =>
 			{
-				attribute.Key.color = attribute.Value;
+				return c2.Key.Time > c1.Key.Time ? -1 : 1;
+			});
+			foreach (KeyValuePair<ICheckpoint, List<KeyValuePair<Material, Color>>> kvp in checkpoints)
+			{
+				foreach (KeyValuePair<Material, Color> attribute in kvp.Value)
+				{
+					attribute.Key.color = attribute.Value;
+				}
 			}
 		}
 
@@ -120,13 +128,13 @@ namespace Level.Animations
 				if (curve != null) { tweener.SetEase(curve); }
 				tweeners.Add(material, tweener);
 			}
-			if (latestCrown != null)
+			if (latestCheckpoint != null)
 			{
-				foreach (KeyValuePair<Material, Color> kvp in colorRespawnRecords[latestCrown])
+				foreach (KeyValuePair<Material, Color> kvp in colorRespawnRecords[latestCheckpoint])
 				{
 					if (kvp.Key == material) { return; }
 				}
-				colorRespawnRecords[latestCrown].Add(new KeyValuePair<Material, Color>(material, targetColor));
+				colorRespawnRecords[latestCheckpoint].Add(new KeyValuePair<Material, Color>(material, targetColor));
 			}
 			else
 			{

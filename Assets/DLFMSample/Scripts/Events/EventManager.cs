@@ -121,7 +121,8 @@ namespace Event
 				}
 				catch (Exception e)
 				{
-					Debug.LogError($"An exception \"{e.Message}\" occurred when running action \"{handler.action.Method.Name}\", the content modified by the event will be drop.\n{e.StackTrace}");
+					Debug.LogError($"An exception \"{e.Message}\" occurred when running action \"{handler.action.Method.Name}\"");
+					throw;
 				}
 			}
 			lockSlim.ExitReadLock();

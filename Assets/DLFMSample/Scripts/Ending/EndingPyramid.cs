@@ -54,8 +54,7 @@ namespace Level.Ending
 			// 开门动画
 			leftTweener?.Play();
 			rightTweener?.Play();
-			Debug.Log(GameController.lines[0].name);
-			foreach (Line line in GameController.lines)
+			foreach (Line line in GameController.Instance.lines)
 			{
 				line.Controllable = false;
 			}

@@ -8,6 +8,27 @@ using UnityEngine.Events;
 
 namespace Level
 {
+    [Serializable]
+    public class LineRespawnAttributes
+    {
+        public Line line;
+        public Vector3 position;
+        public Vector3 way;
+        public Vector3 nextWay;
+        public bool controllable;
+
+        public LineRespawnAttributes(Line line, Vector3 position, Vector3 way, Vector3 nextWay, bool controllable)
+        {
+            this.line = line;
+            this.position = position;
+            this.way = way;
+            this.nextWay = nextWay;
+            this.controllable = controllable;
+        }
+
+        public LineRespawnAttributes() { }
+    }
+
     public class Line : MonoBehaviour
     {
         public class EventsClass
@@ -108,7 +129,7 @@ namespace Level
                     break;
                 case GameState.SelectingSkins:
                     Moving = false;
-                    Respawn(startAttributes);
+                    RespawnByAttribute(startAttributes);
                     autoIndex = 0;
                     break;
             }
@@ -120,7 +141,7 @@ namespace Level
             Skins = SkinManager.InstantiateSkins(this);  // 实例化皮肤
             ChangeSkin(SkinManager.defaultSkin);
             previousFrameIsGrounded = IsGrounded;
-            GameController.lines.Add(this);
+            GameController.Instance.lines.Add(this);
             startAttributes = new LineRespawnAttributes(this, transform.position, transform.localEulerAngles, nextWay, controllable);
         }
         private void Move()
@@ -141,7 +162,7 @@ namespace Level
             if (Moving)
 			{
                 Move();
-                if (auto && autoIndex < turnTime.Count && turnTime[autoIndex] < Time.time - GameController.StartTime)
+                if (auto && autoIndex < turnTime.Count && turnTime[autoIndex] < BGMController.Time)
 				{
                     Turn(true);
                     autoIndex++;
@@ -189,7 +210,7 @@ namespace Level
             }
         }
 
-        public void Respawn(LineRespawnAttributes attributes)
+        public void RespawnByAttribute(LineRespawnAttributes attributes)
         {
             transform.position = attributes.position;
             transform.localEulerAngles = attributes.way;

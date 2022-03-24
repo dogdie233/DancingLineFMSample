@@ -4,9 +4,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
-using UnityEngine.Events;
-using UnityEngine.Playables;
-using UnityEngine.UI;
 
 public enum DeathCause
 {
@@ -31,20 +28,21 @@ namespace Level
     public class GameController : MonoBehaviour
     {
         private static GameController instance = null;
-        public static List<Line> lines = new List<Line>();
+        public readonly List<Line> lines = new List<Line>();
         public AudioMixerGroup soundMixerGroup;
-        private static GameState _state = GameState.SelectingSkins;
-        public static List<ICollection> collections = new List<ICollection>();
-        public static List<Crown> crowns;
-        private static float startTime;
+        private GameState _state = GameState.SelectingSkins;
+        public List<Crown> crowns;
+        private float startTime;
+
         public static GameController Instance => instance;
-        public static float StartTime => startTime;
+        public float StartTime => startTime;
+        public float LevelTime => BGMController.Time;
 
         #region Events
         public EventPipeline<StateChangeEventArgs> OnStateChange { get; private set; }
         public EventPipeline<RespawnEventArgs> OnRespawn { get; private set; }
         public EventPipeline<DiamondPickEventArgs> OnDiamondPick { get; private set; }
-        public EventPipeline<CrownPickEventArgs> OnCrownPick { get; private set; }
+        public EventPipeline<CrownPickEventArgs> OnCheckpointReach { get; private set; }
         public EventPipeline<LineDieEventArgs> OnLineDie { get; private set; }
         public EventPipeline<SkinChangeEventArgs> OnSkinChange { get; private set; }
         #endregion
@@ -52,42 +50,21 @@ namespace Level
         public GameState State
 		{
 			get { return _state; }
-            //[Obsolete]
             set
             {
                 if (_state != value)
                 {
                     OnStateChange.Invoke(new StateChangeEventArgs(_state, value), (StateChangeEventArgs e) =>
                     {
-                        if (!e.canceled)
-                        {
-                            _state = e.newState;
-                            switch(e.newState)
-                            {
-                                case GameState.Playing:
-                                    startTime = Time.time;
-                                    break;
-                                case GameState.SelectingSkins:
-                                case GameState.WaitingContinue:
-                                    for (int i = collections.Count - 1; i >= 0f; i--)
-                                    {
-                                        collections[i].Recover();
-                                    }
-                                    collections.Clear();
-                                    break;
-                            }
-                            BGMController.Instance.OnStateChange(_state);
-                            foreach (Line line in lines)
-							{
-                                line.OnStateChange(_state);
-							}
-                        }
+                        if (e.canceled) { return; }
+                        _state = e.newState;
+                        OnStateChanged(e.lastState);
                     });
                 }
             }
         }
 
-		public static bool IsStarted
+		public bool IsStarted
 		{
             get => !(_state == GameState.SelectingSkins || _state == GameState.WaitingStart);
         }
@@ -104,7 +81,7 @@ namespace Level
             OnStateChange = new EventPipeline<StateChangeEventArgs>();
             OnRespawn = new EventPipeline<RespawnEventArgs>();
             OnDiamondPick = new EventPipeline<DiamondPickEventArgs>();
-            OnCrownPick = new EventPipeline<CrownPickEventArgs>();
+            OnCheckpointReach = new EventPipeline<CrownPickEventArgs>();
             OnLineDie = new EventPipeline<LineDieEventArgs>();
             OnSkinChange = new EventPipeline<SkinChangeEventArgs>();
         }
@@ -130,61 +107,90 @@ namespace Level
 		private void Update()
 		{
 			if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space)) { OnBackgroundButtonClick(); }
+            if (State == GameState.WaitingRespawn && Input.GetKeyDown(KeyCode.P)) { RespawnFromLatestAvailableCheckpoint(); }
 		}
 
-		public void Respawn(Crown crown)
+        public void RespawnFromCheckpoint(ICheckpoint checkpoint)
 		{
-            OnRespawn.Invoke(new RespawnEventArgs(crown), e1 =>
+            OnRespawn.Invoke(new RespawnEventArgs(checkpoint), e1 =>
             {
                 if (e1.canceled) { return; }
-                OnStateChange.Invoke(new StateChangeEventArgs(_state, GameState.WaitingContinue), (StateChangeEventArgs e2) =>
+                State = GameState.WaitingContinue;
+                if (State != GameState.WaitingContinue) { return; }  // 被取消
+                checkpoint.Respawn();
+                var collections = CollectionController.Instance.RemoveAfterByTime(checkpoint.Time);
+                foreach (var collection in collections)
                 {
-                    if (!e2.canceled)
-                    {
-                        _state = GameState.WaitingContinue;
-                        foreach (LineRespawnAttributes attribute in crown.LineRespawnAttributes)
-                        {
-                            attribute.line.Respawn(attribute);
-                        }
-                        for (int i = collections.Count - 1; i >= 0f; i--)
-                        {
-                            if (collections[i] is Crown && (Crown)collections[i] == crown) { break; }
-                            collections[i].Recover();
-                            collections.RemoveAt(i);
-                        }
-                        crown.Respawn();
-                        BGMController.Instance.OnRespawn(crown.Time);
-                    }
-                });
+                    collection.Key.Recover();
+                }
+                BGMController.Time = checkpoint.Time;
+                BGMController.Instance.StopImmediately();
             });
+        }
+
+        private void OnStateChanged(GameState lastState)
+        {
+            switch (State)
+            {
+                case GameState.Playing:
+                    if (lastState == GameState.WaitingStart) { startTime = Time.time; }
+                    BGMController.Instance.Play();
+                    break;
+                case GameState.SelectingSkins:  // 重开
+                    var collections = CollectionController.Instance.RemoveAfter(-1);
+                    Debug.Log($"Recover {collections.Count} collection{(collections.Count > 1 ? "s" : "")}");
+                    foreach (var collection in collections)
+                    {
+                        collection.Key.Recover();
+                    }
+                    BGMController.Time = 0f;
+                    BGMController.Instance.StopImmediately();
+                    break;
+                case GameState.WaitingRespawn:
+                case GameState.GameOver:
+                    BGMController.Instance.FadeOut();
+                    break;
+            }
+            foreach (Line line in lines)
+            {
+                line.OnStateChange(State);
+            }
+        }
+
+		public void RespawnFromLatestAvailableCheckpoint()
+		{
+            var collections = CollectionController.Instance.Collections;
+            for (int i = collections.Count - 1; i >= 0; i--)
+			{
+                var checkpoint = collections[i].Key as ICheckpoint;
+                if (checkpoint != null)
+				{
+                    RespawnFromCheckpoint(checkpoint);
+                    break;
+				}
+			}
         }
 
         public void GameOver(bool fail)
 		{
             if (fail)
 			{
-                foreach (ICollection collection in collections)
-                {
-                    if (collection is Crown)
-                    {
+                var collections = CollectionController.Instance.Collections;
+                foreach (KeyValuePair<ICollection, float> collection in collections)
+				{
+                    if (collection.Key as ICheckpoint != null)
+					{
                         State = GameState.WaitingRespawn;
                         return;
-                    }
-                }
+					}
+				}
             }
             State = GameState.GameOver;
 		}
 
-        public static void PlaySound(AudioClip clip)
+        public void PlaySound(AudioClip clip)
 		{
-            GameObject dieSoundObj = new GameObject("SoundPlayer");
-            dieSoundObj.transform.position = Camera.current.transform.position;
-            AudioSource audioSource = dieSoundObj.AddComponent<AudioSource>();
-            audioSource.playOnAwake = false;
-            audioSource.clip = clip;
-            audioSource.outputAudioMixerGroup = instance.soundMixerGroup;
-            audioSource.Play();
-            Destroy(dieSoundObj, clip.length);
+            AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position);
         }
-	}
+    }
 }

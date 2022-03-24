@@ -5,12 +5,12 @@ namespace Event
 	public class CrownPickEventArgs : EventArgsBase
 	{
 		public readonly Line line;
-		public readonly Crown crown;
+		public readonly ICheckpoint checkpoint;
 
-		public CrownPickEventArgs (Line line, Crown crown)
+		public CrownPickEventArgs (Line line, ICheckpoint checkpoint)
 		{
 			this.line = line;
-			this.crown = crown;
+			this.checkpoint = checkpoint;
 		}
 	}
 }

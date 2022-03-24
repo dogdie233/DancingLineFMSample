@@ -44,7 +44,7 @@ namespace Level.Skins
 
 		public static void ChangeAllLineSkin(Type newSkin)
 		{
-			foreach (Line line in GameController.lines)
+			foreach (Line line in GameController.Instance.lines)
 			{
 				line.ChangeSkin(newSkin);
 			}

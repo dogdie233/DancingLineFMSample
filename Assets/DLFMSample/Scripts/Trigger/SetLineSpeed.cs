@@ -7,7 +7,7 @@ namespace Level.Triggers
 	[RequireComponent(typeof(Collider))]
 	public class SetLineSpeed : MonoBehaviour
 	{
-		[SerializeField] private float speed;
+		[SerializeField] private float speed = 10f;
 		[SerializeField] private Line limit {  get; set; }
 
 		private void OnTriggerEnter(Collider other)

@@ -1,10 +1,7 @@
-﻿using Event;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
+﻿using UnityEngine;
 using DG.Tweening;
-using System;
+using DG.Tweening.Plugins.Options;
+using DG.Tweening.Core;
 
 namespace Level
 {
@@ -12,7 +9,8 @@ namespace Level
     {
 		private static BGMController instance;
 		[SerializeField] private AudioSource source;
-		private Tweener tweener;
+		[SerializeField] private float fadeTime = 3f;
+		private TweenerCore<float, float, FloatOptions> fadeTweener;
 
 		public static BGMController Instance => instance;
 		public static float Time
@@ -57,35 +55,39 @@ namespace Level
 			}
 		}
 
-		public void OnStateChange(GameState newState)
+		private void OnDestroy()
 		{
-			switch (newState)
-			{
-				case GameState.Playing:
-					source.Play();
-					break;
-				case GameState.WaitingRespawn:
-				case GameState.GameOver:
-					tweener?.Kill();
-					tweener = source.DOFade(0f, 3f);
-					break;
-				case GameState.SelectingSkins:
-					tweener?.Kill();
-					source.Stop();
-					source.volume = 1f;
-					break;
-			}
+			if (instance == this) { instance = null; }
 		}
 
-		public void OnRespawn(float time)
+		public void FadeOut()
 		{
-			tweener?.Kill();
-			source.Play();
+			if (fadeTweener == null) { fadeTweener = source.DOFade(0f, fadeTime).OnComplete(() => { source.Pause(); }).SetAutoKill(false).Play(); }
+			else { fadeTweener.Restart(); }
+		}
+
+		public void StopImmediately()
+		{
+			/*if (fadeTweener != null) { fadeTweener.Complete(); }
+			else { source.Pause(); }*/
+			fadeTweener?.Complete();
 			source.volume = 1f;
-			source.time = time;
 			source.Pause();
 		}
 
-		public void Stop() => source.Stop();
+		public void Pause() => source.Pause();
+		public void UnPause() => source.UnPause();
+
+		public void Play()
+		{
+			StopImmediately();
+			source.Play();
+			source.volume = 1f;
+		}
+		public void Play(float time)
+		{
+			Play();
+			Time = time;
+		}
 	}
 }

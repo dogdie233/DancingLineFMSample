@@ -51,7 +51,7 @@ namespace Level.Skins
 							GameObject.Destroy(particleObj, particle.alive);
 						}
 					}
-					GameController.PlaySound(skinInfo.dieAudio);
+					GameController.Instance.PlaySound(skinInfo.dieAudio);
 					break;
 			}
 		}

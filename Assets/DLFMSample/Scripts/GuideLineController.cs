@@ -114,7 +114,7 @@ namespace Level
 				{
 					if (GameController.Instance.State == GameState.Playing)
 					{
-						editingKeyframe = new GuideLineKeyFrame(Time.time - GameController.StartTime, line.Speed, line.transform.position, Vector3.zero);
+						editingKeyframe = new GuideLineKeyFrame(Time.time - GameController.Instance.StartTime, line.Speed, line.transform.position, Vector3.zero);
 					}
 				});
 				line.Events.OnExitGround.AddListener(() =>
@@ -179,7 +179,7 @@ namespace Level
 			if (e.canceled) { return; }
 			editingKeyframe.end = line.transform.position - Quaternion.Euler(line.NextWay) * Vector3.forward * frameWidth / 2f;
 			keyframesInEditing.Add(editingKeyframe);
-			editingKeyframe = new GuideLineKeyFrame((Time.time - GameController.StartTime) + (frameWidth / 2f) / line.Speed, line.Speed, line.transform.position + Quaternion.Euler(line.transform.localEulerAngles) * Vector3.forward * frameWidth / 2f, Vector3.zero);
+			editingKeyframe = new GuideLineKeyFrame((Time.time - GameController.Instance.StartTime) + (frameWidth / 2f) / line.Speed, line.Speed, line.transform.position + Quaternion.Euler(line.transform.localEulerAngles) * Vector3.forward * frameWidth / 2f, Vector3.zero);
 		}
 #endif
 
@@ -187,7 +187,7 @@ namespace Level
 		{
 			if (e.canceled) { return; }
 			showIndex = 0;
-			while (e.crown.Time + disappearEarlyTime >= lines[showIndex].time) { showIndex++; }
+			while (e.checkpoint.Time + disappearEarlyTime >= lines[showIndex].time) { showIndex++; }
 		}
 
 		private void MakeGuideLine()
@@ -233,7 +233,7 @@ namespace Level
 				{
 					editingKeyframe.end = line.transform.position;
 					keyframesInEditing.Add(editingKeyframe);
-					editingKeyframe = new GuideLineKeyFrame(Time.time - GameController.StartTime, line.Speed, line.transform.position, Vector3.zero);
+					editingKeyframe = new GuideLineKeyFrame(Time.time - GameController.Instance.StartTime, line.Speed, line.transform.position, Vector3.zero);
 					previousFrameSpeed = line.Speed;
 				}
 				if (lines.Length > 0 && showIndex < lines.Length - 1)

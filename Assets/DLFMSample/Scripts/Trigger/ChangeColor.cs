@@ -5,8 +5,8 @@ namespace Level.Triggers
 {
     public class ChangeColor : MonoBehaviour
     {
-        [SerializeField] private Material material;
-        [SerializeField] private Color color;
+        [SerializeField] private Material material = null;
+        [SerializeField] private Color color = Color.white;
         [SerializeField] private float duration = 0;
 
         private void OnTriggerEnter(Collider other)

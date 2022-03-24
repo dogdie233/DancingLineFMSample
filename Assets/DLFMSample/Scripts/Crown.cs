@@ -5,53 +5,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using DG.Tweening;
-using System.Linq;
 
 namespace Level
 {
-	[Serializable]
-	public class LineRespawnAttributes
-	{
-		public Line line;
-		public Vector3 position;
-		public Vector3 way;
-		public Vector3 nextWay;
-		public bool controllable;
-
-		public LineRespawnAttributes(Line line, Vector3 position, Vector3 way, Vector3 nextWay, bool controllable)
-		{
-			this.line = line;
-			this.position = position;
-			this.way = way;
-			this.nextWay = nextWay;
-			this.controllable = controllable;
-		}
-
-		public LineRespawnAttributes() { }
-	}
-
-	[Serializable]
-	public class CameraFollowerRespawnAttributes
-	{
-		public CameraFollower follower;
-		public bool enabled;
-		public Vector2 rotation;
-		public float distance;
-		public Vector3 pivot;
-
-		public CameraFollowerRespawnAttributes(CameraFollower follower, bool enabled, Vector2 rotation, float distance, Vector3 pivot)
-		{
-			this.follower = follower;
-			this.enabled = enabled;
-			this.rotation = rotation;
-			this.distance = distance;
-			this.pivot = pivot;
-		}
-
-		public CameraFollowerRespawnAttributes() { }
-	}
-
-	public class Crown : MonoBehaviour, ICollection
+	public class Crown : MonoBehaviour, ICollection, ICheckpoint
 	{
 		public GameObject child;
 		public MeshRenderer crownIcon;
@@ -59,12 +16,12 @@ namespace Level
 		[SerializeField] private float time;
 		[SerializeField] private Line limit;
 		[SerializeField] private LineRespawnAttributes[] lineRespawnAttributes;
-		[SerializeField] private CameraFollowerRespawnAttributes[] cameraFollowerRespawnAttributes;
 		[SerializeField] private bool auto;
 		private bool picked = false;
 		private bool used = false;
 		private Tweener tweener;
 		private new Animation animation;
+		private float pickedTime;
 
 		public float Speed
 		{
@@ -84,35 +41,30 @@ namespace Level
 		public bool IsUsed { get => used; set => used = value; }
 		public bool IsAuto { get => auto; set => auto = value; }
 		public LineRespawnAttributes[] LineRespawnAttributes { get => lineRespawnAttributes; set => lineRespawnAttributes = value; }
-		public CameraFollowerRespawnAttributes[] CameraFollowerRespawnAttributes { get => cameraFollowerRespawnAttributes; set => cameraFollowerRespawnAttributes = value; }
-
+		public bool IsAvailable => IsPicked;
+		public float PickedTime { get => pickedTime; }
 
 		public void Pick()
 		{
 			picked = true;
-			GameController.collections.Add(this);
+			CollectionController.Instance.Add(this, GameController.Instance.LevelTime);
 			child.SetActive(false);
 			tweener?.Kill();
 			if (auto)
 			{
 				time = BGMController.Time;
-				lineRespawnAttributes = new LineRespawnAttributes[GameController.lines.Count];
-				for (int i = 0; i < GameController.lines.Count; i++)
+				lineRespawnAttributes = new LineRespawnAttributes[GameController.Instance.lines.Count];
+				for (int i = 0; i < GameController.Instance.lines.Count; i++)
 				{
 					lineRespawnAttributes[i] = new LineRespawnAttributes();
-					lineRespawnAttributes[i].line = GameController.lines[i];
-					lineRespawnAttributes[i].position = GameController.lines[i].transform.position;
-					lineRespawnAttributes[i].way = GameController.lines[i].transform.localEulerAngles;
-					lineRespawnAttributes[i].nextWay = GameController.lines[i].NextWay;
-					lineRespawnAttributes[i].controllable = GameController.lines[i].Controllable;
+					lineRespawnAttributes[i].line = GameController.Instance.lines[i];
+					lineRespawnAttributes[i].position = GameController.Instance.lines[i].transform.position;
+					lineRespawnAttributes[i].way = GameController.Instance.lines[i].transform.localEulerAngles;
+					lineRespawnAttributes[i].nextWay = GameController.Instance.lines[i].NextWay;
+					lineRespawnAttributes[i].controllable = GameController.Instance.lines[i].Controllable;
 				}
-				cameraFollowerRespawnAttributes = Camera.allCameras
-					.Select(c => (c, c.GetComponent<CameraFollower>()))
-					.Where(az => az.Item2 != null)
-					.Select(az => new CameraFollowerRespawnAttributes(az.Item2, az.Item2.enabled, az.Item2.arm.localEulerAngles, Mathf.Abs(az.c.transform.localPosition.z), az.Item2.pivotOffset))
-					.ToArray();
 			}
-			foreach (Line line in GameController.lines)
+			foreach (Line line in GameController.Instance.lines)
 			{
 				line.Skin.PickCrown(this, line);
 			}
@@ -130,9 +82,17 @@ namespace Level
 
 		public void Respawn()
 		{
-			if (!picked) { throw new Exception("Unable to respawn before pick."); }
+			if (!picked)
+			{
+				Debug.LogWarning("Unable to respawn by crown before pick.");
+				return;
+			}
 			tweener?.Kill();
 			if (!used) { tweener = crownIcon.material.DOFloat(0f, "_Fade", 1f); }
+			foreach (LineRespawnAttributes lineRespawnAttributes in lineRespawnAttributes)
+			{
+				lineRespawnAttributes.line.RespawnByAttribute(lineRespawnAttributes);
+			}
 			used = true;
 		}
 
@@ -159,7 +119,7 @@ namespace Level
 			{
 				Line line = other.GetComponent<Line>();
 				if (limit != null && line != limit) { return; }
-				GameController.Instance.OnCrownPick.Invoke(new CrownPickEventArgs(line, this), args =>
+				GameController.Instance.OnCheckpointReach.Invoke(new CrownPickEventArgs(line, this), args =>
 				{
 					line.Events.OnCrownPicked.Invoke(args, args2 =>
 					{

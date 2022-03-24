@@ -12,7 +12,7 @@ namespace Level
 		[SerializeField] private Line limit;
 		[SerializeField] private ParticlesGroup[] particles;
 		public new Animation animation;
-		private static Transform particlesParent;
+		private Transform particlesParent;
 		private bool picked = false;  // 被线吃
 		private bool destroyed = false;  // 被摧毁
 
@@ -43,9 +43,9 @@ namespace Level
 			if (picked || destroyed) { return; }  //被吃了
 			picked = true;
 			destroyed = false;
-			GameController.collections.Add(this);
+			CollectionController.Instance.Add(this, GameController.Instance.LevelTime);
 			child.SetActive(false);
-			foreach (Line line in GameController.lines)
+			foreach (Line line in GameController.Instance.lines)
 			{
 				line.Skin.PickDiamond(this, line);
 			}
@@ -61,7 +61,6 @@ namespace Level
 
 		public void Recover()
 		{
-			if (picked) { GameController.collections.Remove(this); }
 			picked = destroyed = false;
 			child.SetActive(true);
 			Destroy(particlesParent.gameObject);
